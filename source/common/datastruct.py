@@ -47,7 +47,7 @@ class Event(object):
 
     def serialize(self):
         msg = self.destination + '|' + self.source + \
-            '|' + str(self.msg_type.value)
+                '|' + str(self.msg_type.value)
         if self.data:
             if type(self.data) == str:
                 msg = msg + '|' + self.data
@@ -56,7 +56,6 @@ class Event(object):
                     msg = msg + '|' + self.data.serialize()
                 except Exception as e:
                     print(e)
-                    pass
         return msg
 
     def deserialize(self, msg: str):
@@ -118,7 +117,6 @@ class Event(object):
                 self.msg_type = msg2type
         except Exception as e:
             print(e)
-            pass
 
 
 @dataclass
@@ -210,10 +208,6 @@ class TickData(BaseData):
 
             if (len(v) < 17):
                 self.depth = 1
-                self.bid_price_1 = float(v[4])
-                self.bid_volume_1 = int(v[5])
-                self.ask_price_1 = float(v[6])
-                self.ask_volume_1 = int(v[7])
                 self.open_interest = int(v[8])
                 self.open_price = float(v[9])
                 self.high_price = float(v[10])
@@ -223,10 +217,6 @@ class TickData(BaseData):
                 self.limit_down = float(v[14])
             else:
                 self.depth = 5
-                self.bid_price_1 = float(v[4])
-                self.bid_volume_1 = int(v[5])
-                self.ask_price_1 = float(v[6])
-                self.ask_volume_1 = int(v[7])
                 self.bid_price_2 = float(v[8])
                 self.bid_volume_2 = int(v[9])
                 self.ask_price_2 = float(v[10])
@@ -250,9 +240,12 @@ class TickData(BaseData):
                 self.pre_close = float(v[28])
                 self.limit_up = float(v[29])
                 self.limit_down = float(v[30])
+            self.ask_volume_1 = int(v[7])
+            self.ask_price_1 = float(v[6])
+            self.bid_volume_1 = int(v[5])
+            self.bid_price_1 = float(v[4])
         except Exception as e:
             print(e)
-            pass
 
 
 @dataclass
@@ -332,21 +325,17 @@ class OrderData(BaseData):
         """
         Check if the order is active.
         """
-        if self.status in ACTIVE_STATUSES:
-            return True
-        else:
-            return False
+        return self.status in ACTIVE_STATUSES
 
     def create_cancel_request(self):
         """
         Create cancel request object from order.
         """
-        req = CancelRequest(
+        return CancelRequest(
             clientID=self.clientID,
             client_order_id=self.client_order_id,
-            server_order_id=self.server_order_id
+            server_order_id=self.server_order_id,
         )
-        return req
 
     def deserialize(self, msg: str):
         v = msg.split('|')
@@ -364,7 +353,7 @@ class OrderData(BaseData):
             self.volume = int(v[7])
             if self.volume < 0:
                 self.direction = Direction.SHORT
-                self.volume = -1 * self.volume
+                self.volume *= -1
             self.traded = abs(int(v[8]))
             self.flag = OrderFlag(int(v[9]))
             self.offset = ORDERFALG_2VT[self.flag]
@@ -381,7 +370,6 @@ class OrderData(BaseData):
             self.status = ORDERSTATUS_2VT[self.order_status]
         except Exception as e:
             print(e)
-            pass
 
     def serialize(self):
         msg = str(self.api
@@ -389,8 +377,8 @@ class OrderData(BaseData):
                   + '|' + str(self.clientID)
                   + '|' + str(self.client_order_id)
                   + '|' + self.tag)
-        if (self.orderfield):
-            msg = msg + '|' + self.orderfield.serialize()
+        if self.orderfield:
+            msg = f'{msg}|' + self.orderfield.serialize()
         return msg
 
 
@@ -418,26 +406,45 @@ class CtpOrderField(object):
     CurrencyID: str = ''
 
     def serialize(self):
-        msg = str(self.InstrumentID
-                  + '|' + self.OrderPriceType
-                  + '|' + self.Direction
-                  + '|' + self.CombOffsetFlag
-                  + '|' + self.CombHedgeFlag
-                  + '|' + str(self.LimitPrice)
-                  + '|' + str(self.VolumeTotalOriginal)
-                  + '|' + self.TimeCondition
-                  + '|' + self.GTDDate
-                  + '|' + self.VolumeCondition
-                  + '|' + str(self.MinVolume)
-                  + '|' + self.ContingentCondition
-                  + '|' + str(self.StopPrice)
-                  + '|' + self.ForceCloseReason
-                  + '|' + str(self.IsAutoSuspend)
-                  + '|' + str(self.UserForceClose)
-                  + '|' + str(self.IsSwapOrder)
-                  + '|' + self.BusinessUnit
-                  + '|' + self.CurrencyID)
-        return msg
+        return str(
+            self.InstrumentID
+            + '|'
+            + self.OrderPriceType
+            + '|'
+            + self.Direction
+            + '|'
+            + self.CombOffsetFlag
+            + '|'
+            + self.CombHedgeFlag
+            + '|'
+            + str(self.LimitPrice)
+            + '|'
+            + str(self.VolumeTotalOriginal)
+            + '|'
+            + self.TimeCondition
+            + '|'
+            + self.GTDDate
+            + '|'
+            + self.VolumeCondition
+            + '|'
+            + str(self.MinVolume)
+            + '|'
+            + self.ContingentCondition
+            + '|'
+            + str(self.StopPrice)
+            + '|'
+            + self.ForceCloseReason
+            + '|'
+            + str(self.IsAutoSuspend)
+            + '|'
+            + str(self.UserForceClose)
+            + '|'
+            + str(self.IsSwapOrder)
+            + '|'
+            + self.BusinessUnit
+            + '|'
+            + self.CurrencyID
+        )
 
 
 @dataclass
@@ -451,13 +458,18 @@ class PaperOrderField(object):
     order_size: int = 0
 
     def serialize(self):
-        msg = str(str(self.order_type.value)
-                  + '|' + self.full_symbol
-                  + '|' + str(self.order_flag.value)
-                  + '|' + str(self.order_size)
-                  + '|' + str(self.limit_price)
-                  + '|' + str(self.stop_price))
-        return msg
+        return str(
+            f'{str(self.order_type.value)}|'
+            + self.full_symbol
+            + '|'
+            + str(self.order_flag.value)
+            + '|'
+            + str(self.order_size)
+            + '|'
+            + str(self.limit_price)
+            + '|'
+            + str(self.stop_price)
+        )
 
 
 @dataclass
@@ -538,7 +550,6 @@ class TradeData(BaseData):
             self.api = v[13]
         except Exception as e:
             print(e)
-            pass
 
 
 @dataclass
@@ -589,7 +600,6 @@ class PositionData(BaseData):
             self.timestamp = v[11]
         except Exception as e:
             print(e)
-            pass
 
 
 BacktestTradeData = TradeData
@@ -638,7 +648,6 @@ class AccountData(BaseData):
             self.timestamp = v[10]
         except Exception as e:
             print(e)
-            pass
 
 
 @dataclass
@@ -663,7 +672,6 @@ class LogData(BaseData):
             self.timestamp = v[1]
         except Exception as e:
             print(e)
-            pass
 
 
 @dataclass
@@ -721,7 +729,6 @@ class ContractData(BaseData):
                 self.option_expiry = datetime.strptime(v[12], "%Y%m%d")
         except Exception as e:
             print(e)
-            pass
 
 # product = PRODUCT_CTP2VT.get(data["ProductClass"], None)
 # if product:
@@ -751,8 +758,7 @@ class QryContractRequest:
     content: str = ''
 
     def serialize(self):
-        msg = str(self.sym_type.value) + '|' + self.content
-        return msg
+        return f'{str(self.sym_type.value)}|' + self.content
 
 
 @dataclass
@@ -764,8 +770,7 @@ class SubscribeRequest:
     content: str = ''
 
     def serialize(self):
-        msg = str(self.sym_type.value) + '|' + self.content
-        return msg
+        return f'{str(self.sym_type.value)}|' + self.content
 
 
 @dataclass
@@ -778,9 +783,7 @@ class CancelRequest:
     server_order_id: int = 0
 
     def serialize(self):
-        msg = str(self.clientID) + '|' + str(self.client_order_id) + \
-            '|' + str(self.server_order_id)
-        return msg
+        return f'{str(self.clientID)}|{str(self.client_order_id)}|{str(self.server_order_id)}'
 
 
 OrderRequest = OrderData

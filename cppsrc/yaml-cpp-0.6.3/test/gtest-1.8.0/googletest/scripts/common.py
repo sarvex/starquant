@@ -56,8 +56,7 @@ def GetSvnInfo():
   """Returns the project name and the current SVN workspace's root path."""
 
   for line in GetCommandOutput('svn info .'):
-    m = _SVN_INFO_URL_RE.match(line)
-    if m:
+    if m := _SVN_INFO_URL_RE.match(line):
       project = m.group(1)  # googletest or googlemock
       rel_path = m.group(2)
       root = os.path.realpath(rel_path.count('/') * '../')
@@ -70,7 +69,7 @@ def GetSvnTrunk():
   """Returns the current SVN workspace's trunk root path."""
 
   _, root = GetSvnInfo()
-  return root + '/trunk' if root else None
+  return f'{root}/trunk' if root else None
 
 
 def IsInGTestSvn():

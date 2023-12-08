@@ -71,14 +71,14 @@ def HeaderPreamble(n):
 
   # A map that defines the values used in the preamble template.
   DEFS = {
-    'today' : time.strftime('%m/%d/%Y'),
-    'year' : time.strftime('%Y'),
-    'command' : '%s %s' % (os.path.basename(sys.argv[0]), n),
-    'n' : n
-    }
+      'today': time.strftime('%m/%d/%Y'),
+      'year': time.strftime('%Y'),
+      'command': f'{os.path.basename(sys.argv[0])} {n}',
+      'n': n,
+  }
 
-  return (
-"""// Copyright 2006, Google Inc.
+    return (
+  """// Copyright 2006, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -169,7 +169,7 @@ def Arity(n):
   elif n <= 3:
     return ['nullary', 'unary', 'binary', 'ternary'][n]
   else:
-    return '%s-ary' % n
+    return f'{n}-ary'
 
 
 def Title(word):
@@ -327,13 +327,13 @@ def UnitTestPreamble():
 
   # A map that defines the values used in the preamble template.
   DEFS = {
-    'today' : time.strftime('%m/%d/%Y'),
-    'year' : time.strftime('%Y'),
-    'command' : '%s %s' % (os.path.basename(sys.argv[0]), sys.argv[1]),
-    }
+      'today': time.strftime('%m/%d/%Y'),
+      'year': time.strftime('%Y'),
+      'command': f'{os.path.basename(sys.argv[0])} {sys.argv[1]}',
+  }
 
-  return (
-"""// Copyright 2006, Google Inc.
+    return (
+  """// Copyright 2006, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -426,8 +426,8 @@ def TestsForArity(n):
     'Arity' : Title(Arity(n)),
     }
 
-  tests = (
-"""// Sample functions/functors for testing %(arity)s predicate assertions.
+    tests = (
+  """// Sample functions/functors for testing %(arity)s predicate assertions.
 
 // A %(arity)s predicate function.
 template <%(types)s>
@@ -568,7 +568,7 @@ typedef Predicate%(n)sTest ASSERT_PRED%(n)sTest;
 """ % DEFS
 
   def GenTest(use_format, use_assert, expect_failure,
-              use_functor, use_user_type):
+                use_functor, use_user_type):
     """Returns the test for a predicate assertion macro.
 
     Args:
@@ -586,13 +586,8 @@ typedef Predicate%(n)sTest ASSERT_PRED%(n)sTest;
       of a successful EXPECT_PRED_FORMATn() that takes a functor
       whose arguments have built-in types."""
 
-    if use_assert:
-      assrt = 'ASSERT'  # 'assert' is reserved, so we cannot use
-                        # that identifier here.
-    else:
-      assrt = 'EXPECT'
-
-    assertion = assrt + '_PRED'
+    assrt = 'ASSERT' if use_assert else 'EXPECT'
+    assertion = f'{assrt}_PRED'
 
     if use_format:
       pred_format = 'PredFormat'
@@ -609,28 +604,17 @@ typedef Predicate%(n)sTest ASSERT_PRED%(n)sTest;
       pred_format_type = 'function'
       pred_format += 'Function%(n)s'
       if not use_format:
-        if use_user_type:
-          pred_format += 'Bool'
-        else:
-          pred_format += 'Int'
-
+        pred_format += 'Bool' if use_user_type else 'Int'
     test_name = pred_format_type.title()
 
     if use_user_type:
       arg_type = 'user-defined type (Bool)'
       test_name += 'OnUserType'
-      if expect_failure:
-        arg = 'Bool(n%s_++)'
-      else:
-        arg = 'Bool(++n%s_)'
+      arg = 'Bool(n%s_++)' if expect_failure else 'Bool(++n%s_)'
     else:
       arg_type = 'built-in type (int)'
       test_name += 'OnBuiltInType'
-      if expect_failure:
-        arg = 'n%s_++'
-      else:
-        arg = '++n%s_'
-
+      arg = 'n%s_++' if expect_failure else '++n%s_'
     if expect_failure:
       successful_or_failed = 'failed'
       expected_or_not = 'expected.'

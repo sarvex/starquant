@@ -37,10 +37,7 @@ class Backtester:
     def __init__(self, event_engine: EventEngine = None):
         """"""
         super().__init__()
-        if event_engine:
-            self.event_engine = event_engine
-        else:
-            self.event_engine = None
+        self.event_engine = event_engine if event_engine else None
         self.classes = {}
         self.backtesting_engine = None
         self.thread = None
@@ -773,7 +770,7 @@ class BacktesterManager(QtWidgets.QWidget):
             sqglobal.history_bar[full_sym].clear()
 
     def load_data_file(self):
-        if not self.data_source.currentText() == 'Memory':
+        if self.data_source.currentText() != 'Memory':
             return
 
         full_sym = self.symbol_line.text()
@@ -847,7 +844,7 @@ class BacktesterManager(QtWidgets.QWidget):
             new_setting = dialog.get_setting()
             self.settings[class_name] = new_setting
 
-            result = self.backtester_engine.start_backtesting(
+            if result := self.backtester_engine.start_backtesting(
                 class_name,
                 full_symbol,
                 interval,
@@ -859,10 +856,8 @@ class BacktesterManager(QtWidgets.QWidget):
                 pricetick,
                 capital,
                 new_setting,
-                datasource
-            )
-
-            if result:
+                datasource,
+            ):
                 self.statistics_monitor.clear_data()
                 self.txnstatics_monitor.clear_data()
                 self.overviewchart.clear_data()
@@ -887,7 +882,7 @@ class BacktesterManager(QtWidgets.QWidget):
         new_setting = dialog.get_setting()
         self.settings[class_name] = new_setting
 
-        result = self.backtester_engine.start_batch_bt(
+        if result := self.backtester_engine.start_batch_bt(
             class_name,
             batchsettinglist,
             interval,
@@ -897,10 +892,8 @@ class BacktesterManager(QtWidgets.QWidget):
             pricetick,
             capital,
             new_setting,
-            datasource
-        )
-
-        if result:
+            datasource,
+        ):
             self.statistics_monitor.clear_data()
             self.txnstatics_monitor.clear_data()
             self.overviewchart.clear_data()
@@ -1007,9 +1000,7 @@ class BacktesterManager(QtWidgets.QWidget):
             adddaysstart = 3
         start = tradetime - timedelta(days=adddaysstart)
 
-        adddaysend = 1
-        if tradetime.date().weekday() == 4:
-            adddaysend = 3
+        adddaysend = 3 if tradetime.date().weekday() == 4 else 1
         end = tradetime + timedelta(days=adddaysend)
 
         datasource = self.data_source.currentText()
@@ -1089,14 +1080,7 @@ class BacktestingSettingEditor(QtWidgets.QDialog):
             edit, type_ = tp
             value_text = edit.text()
 
-            if type_ == bool:
-                if value_text == "True":
-                    value = True
-                else:
-                    value = False
-            else:
-                value = type_(value_text)
-
+            value = value_text == "True" if type_ == bool else type_(value_text)
             setting[name] = value
 
         return setting
@@ -1468,10 +1452,8 @@ class BatchTable(QtWidgets.QTableWidget):
         curow = self.currentRow()
         selections = self.selectionModel()
         selectedsList = selections.selectedRows()
-        rows = []
-        for r in selectedsList:
-            rows.append(r.row())
-        if len(rows) == 0 and curow >= 0:
+        rows = [r.row() for r in selectedsList]
+        if not rows and curow >= 0:
             rows.append(curow)
         rows.reverse()
         for i in rows:
@@ -1479,7 +1461,6 @@ class BatchTable(QtWidgets.QTableWidget):
 
     def show_data(self, item):
         row = item.row()
-        pass
 
     def add_data(self, set: dict):
         if not set:
@@ -1487,10 +1468,7 @@ class BatchTable(QtWidgets.QTableWidget):
         self.setSortingEnabled(False)
         self.insertRow(0)
         for icol, col in enumerate(self.cols[:, 1]):
-            if col == 'start' or col == 'end':
-                val = set[col].strftime('%Y-%m-%d')
-            else:
-                val = set[col]
+            val = set[col].strftime('%Y-%m-%d') if col in ['start', 'end'] else set[col]
             item = QtWidgets.QTableWidgetItem(val)
             align = QtCore.Qt.AlignVCenter
             item.setTextAlignment(align)
@@ -1506,9 +1484,8 @@ class BatchTable(QtWidgets.QTableWidget):
         self.setSortingEnabled(False)
         for row in range(self.rowCount()):
             for icol, col in enumerate(self.cols[:, 1]):
-                item = self.item(row, icol)
-                if item:
-                    if col == 'start' or col == 'end':
+                if item := self.item(row, icol):
+                    if col in ['start', 'end']:
                         timestr = str(item.text())
                         dt = datetime.strptime(timestr, "%Y-%m-%d")
                         settinglist[col].append(dt.date())

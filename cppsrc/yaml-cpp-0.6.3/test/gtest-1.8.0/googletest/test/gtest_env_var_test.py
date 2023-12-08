@@ -47,8 +47,8 @@ environ = os.environ.copy()
 
 def AssertEq(expected, actual):
   if expected != actual:
-    print('Expected: %s' % (expected,))
-    print('  Actual: %s' % (actual,))
+    print(f'Expected: {expected}')
+    print(f'  Actual: {actual}')
     raise AssertionError
 
 
@@ -73,7 +73,7 @@ def GetFlag(flag):
 def TestFlag(flag, test_val, default_val):
   """Verifies that the given flag is affected by the corresponding env var."""
 
-  env_var = 'GTEST_' + flag.upper()
+  env_var = f'GTEST_{flag.upper()}'
   SetEnvVar(env_var, test_val)
   AssertEq(test_val, GetFlag(flag))
   SetEnvVar(env_var, None)

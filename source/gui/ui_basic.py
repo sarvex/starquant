@@ -54,12 +54,11 @@ class QFloatTableWidgetItem (QtWidgets.QTableWidgetItem):
         super().__init__(value)
 
     def __lt__(self, other):
-        if (isinstance(other, QFloatTableWidgetItem)):
-            selfDataValue = float(self.text())
-            otherDataValue = float(other.text())
-            return selfDataValue < otherDataValue
-        else:
+        if not (isinstance(other, QFloatTableWidgetItem)):
             return QtWidgets.QTableWidgetItem.__lt__(self, other)
+        selfDataValue = float(self.text())
+        otherDataValue = float(other.text())
+        return selfDataValue < otherDataValue
 
 
 class BaseCell(QtWidgets.QTableWidgetItem):
@@ -207,8 +206,7 @@ class TimeCell(BaseCell):
         """
         timestamp = content.strftime("%H:%M:%S")
 
-        millisecond = int(content.microsecond / 1000)
-        if millisecond:
+        if millisecond := int(content.microsecond / 1000):
             timestamp = f"{timestamp}.{millisecond}"
 
         self.setText(timestamp)
@@ -373,8 +371,7 @@ class BaseMonitor(QtWidgets.QTableWidget):
             for row in range(self.rowCount()):
                 row_data = []
                 for column in range(self.columnCount()):
-                    item = self.item(row, column)
-                    if item:
+                    if item := self.item(row, column):
                         row_data.append(str(item.text()))
                     else:
                         row_data.append("")
@@ -388,10 +385,8 @@ class BaseMonitor(QtWidgets.QTableWidget):
             curow = self.currentRow()
             selections = self.selectionModel()
             selectedsList = selections.selectedRows()
-            rows = []
-            for r in selectedsList:
-                rows.append(r.row())
-            if len(rows) == 0 and curow >= 0:
+            rows = [r.row() for r in selectedsList]
+            if not rows and curow >= 0:
                 rows.append(curow)
             rows.reverse()
             for i in rows:

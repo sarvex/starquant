@@ -88,23 +88,26 @@ class GTestXMLTestCase(gtest_test_utils.TestCase):
       actual_attr   = actual_attributes.get(expected_attr.name)
       self.assert_(
           actual_attr is not None,
-          'expected attribute %s not found in element %s' %
-          (expected_attr.name, actual_node.tagName))
+          f'expected attribute {expected_attr.name} not found in element {actual_node.tagName}',
+      )
       self.assertEquals(
-          expected_attr.value, actual_attr.value,
-          ' values of attribute %s in element %s differ: %s vs %s' %
-          (expected_attr.name, actual_node.tagName,
-           expected_attr.value, actual_attr.value))
+          expected_attr.value,
+          actual_attr.value,
+          f' values of attribute {expected_attr.name} in element {actual_node.tagName} differ: {expected_attr.value} vs {actual_attr.value}',
+      )
 
     expected_children = self._GetChildren(expected_node)
     actual_children = self._GetChildren(actual_node)
     self.assertEquals(
-        len(expected_children), len(actual_children),
-        'number of child elements differ in element ' + actual_node.tagName)
+        len(expected_children),
+        len(actual_children),
+        f'number of child elements differ in element {actual_node.tagName}',
+    )
     for child_id, child in expected_children.items():
-      self.assert_(child_id in actual_children,
-                   '<%s> is not in <%s> (in element %s)' %
-                   (child_id, actual_children, actual_node.tagName))
+      self.assert_(
+          child_id in actual_children,
+          f'<{child_id}> is not in <{actual_children}> (in element {actual_node.tagName})',
+      )
       self.AssertEquivalentNodes(child, actual_children[child_id])
 
   identifying_attribute = {
@@ -130,19 +133,20 @@ class GTestXMLTestCase(gtest_test_utils.TestCase):
     children = {}
     for child in element.childNodes:
       if child.nodeType == Node.ELEMENT_NODE:
-        self.assert_(child.tagName in self.identifying_attribute,
-                     'Encountered unknown element <%s>' % child.tagName)
+        self.assert_(
+            child.tagName in self.identifying_attribute,
+            f'Encountered unknown element <{child.tagName}>',
+        )
         childID = child.getAttribute(self.identifying_attribute[child.tagName])
         self.assert_(childID not in children)
         children[childID] = child
       elif child.nodeType in [Node.TEXT_NODE, Node.CDATA_SECTION_NODE]:
-        if 'detail' not in children:
-          if (child.nodeType == Node.CDATA_SECTION_NODE or
-              not child.nodeValue.isspace()):
-            children['detail'] = child.ownerDocument.createCDATASection(
-                child.nodeValue)
-        else:
+        if 'detail' in children:
           children['detail'].nodeValue += child.nodeValue
+        elif (child.nodeType == Node.CDATA_SECTION_NODE or
+              not child.nodeValue.isspace()):
+          children['detail'] = child.ownerDocument.createCDATASection(
+              child.nodeValue)
       else:
         self.fail('Encountered unexpected node type %d' % child.nodeType)
     return children

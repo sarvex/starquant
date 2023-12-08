@@ -55,7 +55,7 @@ class StrategyEngine(BaseEngine):
         self._handlers = defaultdict(list)
         if configfile:
             self.config_filename = configfile
-        filepath = Path.cwd().joinpath("etc/" + self.config_filename)
+        filepath = Path.cwd().joinpath(f"etc/{self.config_filename}")
         with open(filepath, encoding='utf8') as fd:
             self._config = yaml.load(fd)
         self.ordercount = 0
@@ -120,8 +120,7 @@ class StrategyEngine(BaseEngine):
 
     def init_rqdata(self):
 
-        result = rqdata_client.init()
-        if result:
+        if result := rqdata_client.init():
             self.write_log("RQData数据接口初始化成功")
 
     def load_contract(self):
@@ -137,11 +136,10 @@ class StrategyEngine(BaseEngine):
                 product=PRODUCT_CTP2VT[str(data["product"])],
                 size=data["size"],
                 pricetick=data["pricetick"],
-                net_position=True if str(
-                    data["positiontype"]) == THOST_FTDC_PT_Net else False,
+                net_position=str(data["positiontype"]) == THOST_FTDC_PT_Net,
                 long_margin_ratio=data["long_margin_ratio"],
                 short_margin_ratio=data["short_margin_ratio"],
-                full_symbol=data["full_symbol"]
+                full_symbol=data["full_symbol"],
             )
             # For option only
             if contract.product == Product.OPTION:
@@ -216,7 +214,6 @@ class StrategyEngine(BaseEngine):
     def process_general_event(self, event):
         for name, strategy in self.strategies.items():
             self.call_strategy_func(strategy, strategy.on_headermsg, event)
-        pass
 
     def process_tick_event(self, event: Event):
         """"""
@@ -328,7 +325,7 @@ class StrategyEngine(BaseEngine):
 
     def process_strategycontrol_event(self, event: Event):
         msgtype = event.msg_type
-        deslist = ['@*', str(self.id), '@' + str(self.id)]
+        deslist = ['@*', str(self.id), f'@{str(self.id)}']
         if (event.destination not in deslist):
             return
         elif (msgtype == MSG_TYPE.MSG_TYPE_STRATEGY_STATUS):
@@ -338,8 +335,6 @@ class StrategyEngine(BaseEngine):
                       msgtype=MSG_TYPE.MSG_TYPE_STRATEGY_STATUS
                       )
             self._send_sock.send(m.serialize())
-        # elif (event.destination not in deslist ) :
-        #     return
         elif (msgtype == MSG_TYPE.MSG_TYPE_STRATEGY_ADD):
             v = event.data.split('|')
             classname = v[0]
@@ -384,8 +379,7 @@ class StrategyEngine(BaseEngine):
         elif (msgtype == MSG_TYPE.MSG_TYPE_STRATEGY_GET_DATA):
             # print('begin get data')
             if event.data:
-                strategy = self.strategies.get(event.data, None)
-                if strategy:
+                if strategy := self.strategies.get(event.data, None):
                     self.put_strategy_event(strategy)
             else:  # get all strategy data
                 for strategy in self.strategies.values():
@@ -466,17 +460,12 @@ class StrategyEngine(BaseEngine):
             # Call on_init function of strategy
             self.call_strategy_func(strategy, strategy.on_init)
 
-            # Restore strategy data(variables)
-            data = self.strategy_data.get(strategy_name, None)
-            if data:
+            if data := self.strategy_data.get(strategy_name, None):
                 for name in strategy.variables:
-                    value = data.get(name, None)
-                    if value:
+                    if value := data.get(name, None):
                         setattr(strategy, name, value)
 
-            # Subscribe market data
-            contract = self.get_contract(strategy.full_symbol)
-            if contract:
+            if contract := self.get_contract(strategy.full_symbol):
                 m = Event(type=EventType.SUBSCRIBE,
                           msgtype=MSG_TYPE.MSG_TYPE_SUBSCRIBE_MARKET_DATA)
                 m.destination = "CTP.MD"
@@ -491,13 +480,13 @@ class StrategyEngine(BaseEngine):
 
             # qry pos and acc
             m = Event(type=EventType.QRY, msgtype=MSG_TYPE.MSG_TYPE_QRY_POS)
-            m.destination = strategy.api + '.' + strategy.account
+            m.destination = f'{strategy.api}.{strategy.account}'
             m.source = str(self.id)
             self._send_sock.send(m.serialize())
 
             m = Event(type=EventType.QRY,
                       msgtype=MSG_TYPE.MSG_TYPE_QRY_ACCOUNT)
-            m.destination = strategy.api + '.' + strategy.account
+            m.destination = f'{strategy.api}.{strategy.account}'
             m.source = str(self.id)
             self._send_sock.send(m.serialize())
 
@@ -523,13 +512,13 @@ class StrategyEngine(BaseEngine):
 
         # qry pos and acc
         m = Event(type=EventType.QRY, msgtype=MSG_TYPE.MSG_TYPE_QRY_POS)
-        m.destination = strategy.api + '.' + strategy.account
+        m.destination = f'{strategy.api}.{strategy.account}'
         m.source = str(self.id)
         self._send_sock.send(m.serialize())
 
         m = Event(type=EventType.QRY,
                   msgtype=MSG_TYPE.MSG_TYPE_QRY_ACCOUNT)
-        m.destination = strategy.api + '.' + strategy.account
+        m.destination = f'{strategy.api}.{strategy.account}'
         m.source = str(self.id)
         self._send_sock.send(m.serialize())
 
@@ -691,11 +680,10 @@ class StrategyEngine(BaseEngine):
         """
         strategy_class = self.classes[class_name]
 
-        parameters = {}
-        for name in strategy_class.parameters:
-            parameters[name] = getattr(strategy_class, name)
-
-        return parameters
+        return {
+            name: getattr(strategy_class, name)
+            for name in strategy_class.parameters
+        }
 
     def get_strategy_parameters(self, strategy_name):
         """
@@ -778,8 +766,7 @@ class StrategyEngine(BaseEngine):
         Put an event to update strategy status.
         """
         data = strategy.get_data()
-        sdata = {}
-        sdata[strategy.strategy_name] = data
+        sdata = {strategy.strategy_name: data}
         # event = Event(EVENT_CTA_STRATEGY, data)
         # self.event_engine.put(event)
         msg = json.dumps(sdata)
@@ -798,10 +785,7 @@ class StrategyEngine(BaseEngine):
         """
         Query bar data from RQData.
         """
-        data = rqdata_client.query_bar(
-            symbol, exchange, interval, start, end
-        )
-        return data
+        return rqdata_client.query_bar(symbol, exchange, interval, start, end)
 
     def load_bar(
         self,
@@ -816,11 +800,7 @@ class StrategyEngine(BaseEngine):
         tradedays = abs(days)
         weekday = datetime.now().weekday()
         adddays = 2 if (days - weekday > 0) else 0
-        if weekday == 6:
-            tradedays = days + 1
-        else:
-            tradedays = days + adddays
-
+        tradedays = days + 1 if weekday == 6 else days + adddays
         symbol, exchange = extract_full_symbol(full_symbol)
         end = datetime.now()
         start = end - timedelta(days=tradedays)
@@ -842,11 +822,7 @@ class StrategyEngine(BaseEngine):
         tradedays = abs(days)
         weekday = datetime.now().weekday()
         adddays = 2 if (days - weekday > 0) else 0
-        if weekday == 6:
-            tradedays = days + 1
-        else:
-            tradedays = days + adddays
-
+        tradedays = days + 1 if weekday == 6 else days + adddays
         symbol, exchange = extract_full_symbol(full_symbol)
         end = datetime.now()
         start = end - timedelta(tradedays)
@@ -937,19 +913,17 @@ class StrategyEngine(BaseEngine):
         if not full_symbol:
             return list(self.active_orders.values())
         else:
-            active_orders = [
+            return [
                 order
                 for order in self.active_orders.values()
                 if order.full_symbol == full_symbol
             ]
-            return active_orders
 
     def get_position_holding(self, acc: str, full_symbol: str):
         return self.offset_converter.get_position_holding(acc, full_symbol)
 
     def get_strategy_active_orderids(self, strategy_name: str):
-        oidset = self.strategy_orderid_map[strategy_name]
-        return oidset
+        return self.strategy_orderid_map[strategy_name]
 
   #order, cancel
 
@@ -973,11 +947,12 @@ class StrategyEngine(BaseEngine):
             req.clientID = self.id
             req.client_order_id = self.ordercount
             self.ordercount += 1
-            m = Event(type=EventType.ORDER,
-                      data=req,
-                      des=req.api + '.' + req.account,
-                      src=str(self.id)
-                      )
+            m = Event(
+                type=EventType.ORDER,
+                data=req,
+                des=f'{req.api}.{req.account}',
+                src=str(self.id),
+            )
             if req.api == "CTP.TD":
                 m.msg_type = MSG_TYPE.MSG_TYPE_ORDER_CTP
             elif req.api == "PAPER.TD":
@@ -1007,12 +982,13 @@ class StrategyEngine(BaseEngine):
             return
 
         req = order.create_cancel_request()
-        m = Event(type=EventType.CANCEL,
-                  data=req,
-                  des=order.api + '.' + order.account,
-                  src=str(self.id),
-                  msgtype=MSG_TYPE.MSG_TYPE_ORDER_ACTION
-                  )
+        m = Event(
+            type=EventType.CANCEL,
+            data=req,
+            des=f'{order.api}.{order.account}',
+            src=str(self.id),
+            msgtype=MSG_TYPE.MSG_TYPE_ORDER_ACTION,
+        )
         msg = m.serialize()
         print(f'tradeclient {self.id} send msg: {msg}')
         self._send_sock.send(msg)

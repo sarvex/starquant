@@ -81,10 +81,7 @@ def Run(command):
   """Runs a command; returns 1 if it was killed by a signal, or 0 otherwise."""
 
   p = gtest_test_utils.Subprocess(command, env=environ)
-  if p.terminated_by_signal:
-    return 1
-  else:
-    return 0
+  return 1 if p.terminated_by_signal else 0
 
 
 # The tests.
@@ -114,31 +111,25 @@ class GTestBreakOnFailureUnitTest(gtest_test_utils.TestCase):
     if env_var_value is None:
       env_var_value_msg = ' is not set'
     else:
-      env_var_value_msg = '=' + env_var_value
+      env_var_value_msg = f'={env_var_value}'
 
     if flag_value is None:
       flag = ''
     elif flag_value == '0':
-      flag = '--%s=0' % BREAK_ON_FAILURE_FLAG
+      flag = f'--{BREAK_ON_FAILURE_FLAG}=0'
     else:
-      flag = '--%s' % BREAK_ON_FAILURE_FLAG
+      flag = f'--{BREAK_ON_FAILURE_FLAG}'
 
     command = [EXE_PATH]
     if flag:
       command.append(flag)
 
-    if expect_seg_fault:
-      should_or_not = 'should'
-    else:
-      should_or_not = 'should not'
-
+    should_or_not = 'should' if expect_seg_fault else 'should not'
     has_seg_fault = Run(command)
 
     SetEnvVar(BREAK_ON_FAILURE_ENV_VAR, None)
 
-    msg = ('when %s%s, an assertion failure in "%s" %s cause a seg-fault.' %
-           (BREAK_ON_FAILURE_ENV_VAR, env_var_value_msg, ' '.join(command),
-            should_or_not))
+    msg = f"""when {BREAK_ON_FAILURE_ENV_VAR}{env_var_value_msg}, an assertion failure in "{' '.join(command)}" {should_or_not} cause a seg-fault."""
     self.assert_(has_seg_fault == expect_seg_fault, msg)
 
   def testDefaultBehavior(self):

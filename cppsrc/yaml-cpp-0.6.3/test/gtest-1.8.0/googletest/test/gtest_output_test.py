@@ -279,14 +279,12 @@ class GTestOutputTest(gtest_test_utils.TestCase):
   def testOutput(self):
     output = GetOutputOfAllCommands()
 
-    golden_file = open(GOLDEN_PATH, 'r')
-    # A mis-configured source control system can cause \r appear in EOL
-    # sequences when we read the golden file irrespective of an operating
-    # system used. Therefore, we need to strip those \r's from newlines
-    # unconditionally.
-    golden = ToUnixLineEnding(golden_file.read())
-    golden_file.close()
-
+    with open(GOLDEN_PATH, 'r') as golden_file:
+      # A mis-configured source control system can cause \r appear in EOL
+      # sequences when we read the golden file irrespective of an operating
+      # system used. Therefore, we need to strip those \r's from newlines
+      # unconditionally.
+      golden = ToUnixLineEnding(golden_file.read())
     # We want the test to pass regardless of certain features being
     # supported or not.
 
@@ -324,9 +322,8 @@ if __name__ == '__main__':
   if sys.argv[1:] == [GENGOLDEN_FLAG]:
     if CAN_GENERATE_GOLDEN_FILE:
       output = GetOutputOfAllCommands()
-      golden_file = open(GOLDEN_PATH, 'wb')
-      golden_file.write(output)
-      golden_file.close()
+      with open(GOLDEN_PATH, 'wb') as golden_file:
+        golden_file.write(output)
     else:
       message = (
           """Unable to write a golden file when compiled in an environment

@@ -101,11 +101,10 @@ class CtaManager(QtWidgets.QWidget):
         """
         strategy_class = self.classes[class_name]
 
-        parameters = {}
-        for name in strategy_class.parameters:
-            parameters[name] = getattr(strategy_class, name)
-
-        return parameters
+        return {
+            name: getattr(strategy_class, name)
+            for name in strategy_class.parameters
+        }
 
     def load_strategy_setting(self):
         """
@@ -283,38 +282,69 @@ class CtaManager(QtWidgets.QWidget):
         self.signal_strategy_out.emit(m)
 
     def init_strategy(self, strategy_name: str, id: str):
-        m = Event(type=EventType.STRATEGY_CONTROL, data=strategy_name,
-                  des='@' + id, src='0', msgtype=MSG_TYPE.MSG_TYPE_STRATEGY_INIT)
+        m = Event(
+            type=EventType.STRATEGY_CONTROL,
+            data=strategy_name,
+            des=f'@{id}',
+            src='0',
+            msgtype=MSG_TYPE.MSG_TYPE_STRATEGY_INIT,
+        )
         self.signal_strategy_out.emit(m)
 
     def start_strategy(self, strategy_name: str, id: str):
-        m = Event(type=EventType.STRATEGY_CONTROL, data=strategy_name,
-                  des='@' + id, src='0', msgtype=MSG_TYPE.MSG_TYPE_STRATEGY_START)
+        m = Event(
+            type=EventType.STRATEGY_CONTROL,
+            data=strategy_name,
+            des=f'@{id}',
+            src='0',
+            msgtype=MSG_TYPE.MSG_TYPE_STRATEGY_START,
+        )
         self.signal_strategy_out.emit(m)
 
     def stop_strategy(self, strategy_name: str, id: str):
-        m = Event(type=EventType.STRATEGY_CONTROL, data=strategy_name,
-                  des='@' + id, src='0', msgtype=MSG_TYPE.MSG_TYPE_STRATEGY_STOP)
+        m = Event(
+            type=EventType.STRATEGY_CONTROL,
+            data=strategy_name,
+            des=f'@{id}',
+            src='0',
+            msgtype=MSG_TYPE.MSG_TYPE_STRATEGY_STOP,
+        )
         self.signal_strategy_out.emit(m)
 
     def reset_strategy(self, strategy_name: str, id: str):
-        m = Event(type=EventType.STRATEGY_CONTROL, data=strategy_name,
-                  des='@' + id, src='0', msgtype=MSG_TYPE.MSG_TYPE_STRATEGY_RESET)
+        m = Event(
+            type=EventType.STRATEGY_CONTROL,
+            data=strategy_name,
+            des=f'@{id}',
+            src='0',
+            msgtype=MSG_TYPE.MSG_TYPE_STRATEGY_RESET,
+        )
         self.signal_strategy_out.emit(m)
 
     def edit_strategy(self, strategy_name: str, setting: dict, id: str):
-        msg = strategy_name + '|' + json.dumps(setting)
+        msg = f'{strategy_name}|{json.dumps(setting)}'
         m = Event(type=EventType.STRATEGY_CONTROL, data=msg, des='@' +
                   id, src='0', msgtype=MSG_TYPE.MSG_TYPE_STRATEGY_EDIT)
         self.signal_strategy_out.emit(m)
 
     def send_remove_strategy_msg(self, strategy_name: str, id: str, duplicate: bool = False):
-        if duplicate:
-            m = Event(type=EventType.STRATEGY_CONTROL, data=strategy_name, des='@' +
-                      id, src='0', msgtype=MSG_TYPE.MSG_TYPE_STRATEGY_REMOVE_DUPLICATE)
-        else:
-            m = Event(type=EventType.STRATEGY_CONTROL, data=strategy_name,
-                      des='@' + id, src='0', msgtype=MSG_TYPE.MSG_TYPE_STRATEGY_REMOVE)
+        m = (
+            Event(
+                type=EventType.STRATEGY_CONTROL,
+                data=strategy_name,
+                des=f'@{id}',
+                src='0',
+                msgtype=MSG_TYPE.MSG_TYPE_STRATEGY_REMOVE_DUPLICATE,
+            )
+            if duplicate
+            else Event(
+                type=EventType.STRATEGY_CONTROL,
+                data=strategy_name,
+                des=f'@{id}',
+                src='0',
+                msgtype=MSG_TYPE.MSG_TYPE_STRATEGY_REMOVE,
+            )
+        )
         self.signal_strategy_out.emit(m)
 
     def remove_strategy(self, strategy_name):
@@ -331,7 +361,7 @@ class CtaManager(QtWidgets.QWidget):
         engine_id = str(self.engine_combo.currentText())
         if not engine_id:
             return
-        desid = '@' + engine_id
+        desid = f'@{engine_id}'
         parameters = self.get_strategy_class_parameters(class_name)
         editor = SettingEditor(parameters, class_name=class_name)
         n = editor.exec_()
@@ -345,7 +375,7 @@ class CtaManager(QtWidgets.QWidget):
                     None, 'Error', 'strategy name already exist!', QtWidgets.QMessageBox.Ok)
                 return
             strsetting = json.dumps(setting)
-            msg = class_name + '|' + strategy_name + '|' + full_symbol + '|' + strsetting
+            msg = f'{class_name}|{strategy_name}|{full_symbol}|{strsetting}'
             m = Event(type=EventType.STRATEGY_CONTROL, data=msg,
                       des=desid, src='0', msgtype=MSG_TYPE.MSG_TYPE_STRATEGY_ADD)
             self.signal_strategy_out.emit(m)
@@ -591,14 +621,7 @@ class SettingEditor(QtWidgets.QDialog):
             edit, type_ = tp
             value_text = edit.text()
 
-            if type_ == bool:
-                if value_text == "True":
-                    value = True
-                else:
-                    value = False
-            else:
-                value = type_(value_text)
-
+            value = value_text == "True" if type_ == bool else type_(value_text)
             setting[name] = value
 
         return setting

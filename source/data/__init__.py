@@ -17,14 +17,12 @@ def init_sql(driver: Driver, settings: dict):
     from .database_sql import init
     keys = {'database', "host", "port", "user", "password"}
     settings = {k: v for k, v in settings.items() if k in keys}
-    _database_manager = init(driver, settings)
-    return _database_manager
+    return init(driver, settings)
 
 
 def init_nosql(driver: Driver, settings: dict):
     from .database_mongo import init
-    _database_manager = init(driver, settings=settings)
-    return _database_manager
+    return init(driver, settings=settings)
 
 
 settings = get_settings("database.")

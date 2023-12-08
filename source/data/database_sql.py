@@ -36,22 +36,19 @@ def init(driver: Driver, settings: dict):
 def init_sqlite(settings: dict):
     database = settings["database"]
     path = str(get_file_path(database))
-    db = SqliteDatabase(path)
-    return db
+    return SqliteDatabase(path)
 
 
 def init_mysql(settings: dict):
     keys = {"database", "user", "password", "host", "port"}
     settings = {k: v for k, v in settings.items() if k in keys}
-    db = MySQLDatabase(**settings)
-    return db
+    return MySQLDatabase(**settings)
 
 
 def init_postgresql(settings: dict):
     keys = {"database", "user", "password", "host", "port"}
     settings = {k: v for k, v in settings.items() if k in keys}
-    db = PostgresqlDatabase(**settings)
-    return db
+    return PostgresqlDatabase(**settings)
 
 
 class ModelBase(Model):
@@ -60,6 +57,9 @@ class ModelBase(Model):
 
 
 def init_models(db: Database, driver: Driver):
+
+
+
     class DbBarData(ModelBase):
         """
         Candlestick bar data for database storage.
@@ -108,7 +108,7 @@ def init_models(db: Database, driver: Driver):
             """
             Generate BarData object from DbBarData.
             """
-            bar = BarData(
+            return BarData(
                 symbol=self.symbol,
                 exchange=Exchange(self.exchange),
                 datetime=self.datetime,
@@ -120,7 +120,6 @@ def init_models(db: Database, driver: Driver):
                 close_price=self.close_price,
                 gateway_name="DB",
             )
-            return bar
 
         @staticmethod
         def save_all(objs: List["DbBarData"]):
@@ -144,6 +143,7 @@ def init_models(db: Database, driver: Driver):
                     for c in chunked(dicts, 50):
                         DbBarData.insert_many(
                             c).on_conflict_replace().execute()
+
 
     class DbTickData(ModelBase):
         """
@@ -346,8 +346,7 @@ class SqlManager(BaseDatabaseManager):
             )
             .order_by(self.class_bar.datetime)
         )
-        data = [db_bar.to_bar() for db_bar in s]
-        return data
+        return [db_bar.to_bar() for db_bar in s]
 
     def load_tick_data(
         self, symbol: str, exchange: Exchange, start: datetime, end: datetime
@@ -363,8 +362,7 @@ class SqlManager(BaseDatabaseManager):
             .order_by(self.class_tick.datetime)
         )
 
-        data = [db_tick.to_tick() for db_tick in s]
-        return data
+        return [db_tick.to_tick() for db_tick in s]
 
     def save_bar_data(self, datas: Sequence[BarData]):
         ds = [self.class_bar.from_bar(i) for i in datas]
@@ -377,7 +375,7 @@ class SqlManager(BaseDatabaseManager):
     def get_newest_bar_data(
         self, symbol: str, exchange: "Exchange", interval: "Interval"
     ) -> Optional["BarData"]:
-        s = (
+        if s := (
             self.class_bar.select()
             .where(
                 (self.class_bar.symbol == symbol)
@@ -386,15 +384,14 @@ class SqlManager(BaseDatabaseManager):
             )
             .order_by(self.class_bar.datetime.desc())
             .first()
-        )
-        if s:
+        ):
             return s.to_bar()
         return None
 
     def get_newest_tick_data(
         self, symbol: str, exchange: "Exchange"
     ) -> Optional["TickData"]:
-        s = (
+        if s := (
             self.class_tick.select()
             .where(
                 (self.class_tick.symbol == symbol)
@@ -402,8 +399,7 @@ class SqlManager(BaseDatabaseManager):
             )
             .order_by(self.class_tick.datetime.desc())
             .first()
-        )
-        if s:
+        ):
             return s.to_tick()
         return None
 

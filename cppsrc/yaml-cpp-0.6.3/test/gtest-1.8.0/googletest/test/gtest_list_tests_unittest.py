@@ -144,10 +144,10 @@ class GTestListTestsUnitTest(gtest_test_utils.TestCase):
       flag = ''
       flag_expression = 'not set'
     elif flag_value == '0':
-      flag = '--%s=0' % LIST_TESTS_FLAG
+      flag = f'--{LIST_TESTS_FLAG}=0'
       flag_expression = '0'
     else:
-      flag = '--%s' % LIST_TESTS_FLAG
+      flag = f'--{LIST_TESTS_FLAG}'
       flag_expression = '1'
 
     args = [flag]
@@ -167,8 +167,8 @@ class GTestListTestsUnitTest(gtest_test_utils.TestCase):
     else:
       self.assert_(
           not EXPECTED_OUTPUT_NO_FILTER_RE.match(output),
-          ('when %s is %s, the output of "%s" is "%s"'%
-           (LIST_TESTS_FLAG, flag_expression, ' '.join(args), output)))
+          f"""when {LIST_TESTS_FLAG} is {flag_expression}, the output of "{' '.join(args)}" is "{output}\"""",
+      )
 
   def testDefaultBehavior(self):
     """Tests the behavior of the default mode."""

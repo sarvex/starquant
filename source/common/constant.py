@@ -10,7 +10,6 @@ from ..api.ctp_constant import (
 )
 
 
-# ################        Begin consts  # ################
 class ESTATE(Enum):
     DISCONNECTED = 0
     CONNECTING = 1
@@ -311,9 +310,6 @@ class TickType(Enum):
     OpenInterest = 1075
     Bar = 1076
 
-# ############################# vnpy 's data #########################
-
-
 class Direction(Enum):
     """
     Direction of order/trade/position.
@@ -392,8 +388,13 @@ ORDERSTATUS_2VT = {
     OrderStatus.ERROR: Status.REJECTED
 }
 
-ACTIVE_STATUSES = set([Status.NEWBORN, Status.SUBMITTING,
-                       Status.NOTTRADED, Status.PARTTRADED, Status.UNKNOWN])
+ACTIVE_STATUSES = {
+    Status.NEWBORN,
+    Status.SUBMITTING,
+    Status.NOTTRADED,
+    Status.PARTTRADED,
+    Status.UNKNOWN,
+}
 
 
 class Product(Enum):

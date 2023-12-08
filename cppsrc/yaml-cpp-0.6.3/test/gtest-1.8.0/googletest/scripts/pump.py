@@ -111,10 +111,7 @@ class Cursor:
     return rhs <= self
 
   def __str__(self):
-    if self == Eof():
-      return 'EOF'
-    else:
-      return '%s(%s)' % (self.line + 1, self.column)
+    return 'EOF' if self == Eof() else f'{self.line + 1}({self.column})'
 
   def __add__(self, offset):
     return Cursor(self.line, self.column + offset)
@@ -138,14 +135,8 @@ class Token:
   """Represents a token in a Pump source file."""
 
   def __init__(self, start=None, end=None, value=None, token_type=None):
-    if start is None:
-      self.start = Eof()
-    else:
-      self.start = start
-    if end is None:
-      self.end = Eof()
-    else:
-      self.end = end
+    self.start = Eof() if start is None else start
+    self.end = Eof() if end is None else end
     self.value = value
     self.token_type = token_type
 
@@ -169,8 +160,7 @@ def StartsWith(lines, pos, string):
 def FindFirstInLine(line, token_table):
   best_match_start = -1
   for (regex, token_type) in token_table:
-    m = regex.search(line)
-    if m:
+    if m := regex.search(line):
       # We found regex in lines
       if best_match_start < 0 or m.start() < best_match_start:
         best_match_start = m.start()
@@ -191,8 +181,7 @@ def FindFirst(lines, token_table, cursor):
   for line in lines[start.line:]:
     if cur_line_number == start.line:
       line = line[start.column:]
-    m = FindFirstInLine(line, token_table)
-    if m:
+    if m := FindFirstInLine(line, token_table):
       # We found a regex in line.
       (start_column, length, token_type) = m
       if cur_line_number == start.line:
@@ -261,21 +250,17 @@ DOT_DOT_REGEX = re.compile(r'\.\.')
 def Skip(lines, pos, regex):
   line = lines[pos.line][pos.column:]
   m = re.search(regex, line)
-  if m and not m.start():
-    return pos + m.end()
-  else:
-    return pos
+  return pos + m.end() if m and not m.start() else pos
 
 
 def SkipUntil(lines, pos, regex, token_type):
   line = lines[pos.line][pos.column:]
-  m = re.search(regex, line)
-  if m:
+  if m := re.search(regex, line):
     return pos + m.start()
-  else:
-    print ('ERROR: %s expected on line %s after column %s.' %
-           (token_type, pos.line + 1, pos.column))
-    sys.exit(1)
+  print(
+      f'ERROR: {token_type} expected on line {pos.line + 1} after column {pos.column}.'
+  )
+  sys.exit(1)
 
 
 def ParseExpTokenInParens(lines, pos):
@@ -366,8 +351,7 @@ def TokenizeLines(lines, pos):
       exp_token = ParseExpTokenInParens(lines, found.end)
       yield exp_token
       pos = exp_token.end
-    elif (found.token_type == ']]' or found.token_type == '$if' or
-          found.token_type == '$elif' or found.token_type == '$else'):
+    elif found.token_type in [']]', '$if', '$elif', '$else']:
       if prev_token_rstripped:
         yield prev_token_rstripped
       yield found
@@ -383,8 +367,7 @@ def Tokenize(s):
   """A generator that yields the tokens in the given string."""
   if s != '':
     lines = s.splitlines(True)
-    for token in TokenizeLines(lines, Cursor(0, 0)):
-      yield token
+    yield from TokenizeLines(lines, Cursor(0, 0))
 
 
 class CodeNode:
@@ -461,10 +444,7 @@ def PopToken(a_list, token_type=None):
 
 
 def PeekToken(a_list):
-  if not a_list:
-    return None
-
-  return a_list[0]
+  return None if not a_list else a_list[0]
 
 
 def ParseExpNode(token):
@@ -566,8 +546,7 @@ def ParseCodeNode(tokens):
   while True:
     if not tokens:
       break
-    atomic_code_node = ParseAtomicCodeNode(tokens)
-    if atomic_code_node:
+    if atomic_code_node := ParseAtomicCodeNode(tokens):
       atomic_code_list.append(atomic_code_node)
     else:
       break
@@ -577,8 +556,7 @@ def ParseCodeNode(tokens):
 def ParseToAST(pump_src_text):
   """Convert the given Pump source text into an AST."""
   tokens = list(Tokenize(pump_src_text))
-  code_node = ParseCodeNode(tokens)
-  return code_node
+  return ParseCodeNode(tokens)
 
 
 class Env:
@@ -596,7 +574,7 @@ class Env:
     # If value looks like an int, store it as an int.
     try:
       int_value = int(value)
-      if ('%s' % int_value) == value:
+      if f'{int_value}' == value:
         value = int_value
     except Exception:
       pass
@@ -644,10 +622,7 @@ class Output:
 
   def GetLastLine(self):
     index = self.string.rfind('\n')
-    if index < 0:
-      return ''
-
-    return self.string[index + 1:]
+    return '' if index < 0 else self.string[index + 1:]
 
   def Append(self, s):
     self.string += s

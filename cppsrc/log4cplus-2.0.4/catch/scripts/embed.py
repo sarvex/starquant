@@ -26,14 +26,12 @@ class LineMapper:
     #  #if, #ifdef, comments after #else
     def mapLine( self, lineNo, line ):
         for idFrom, idTo in self.idMap.items():
-            r = re.compile("(.*)" + idFrom + "(.*)")
+            r = re.compile(f"(.*){idFrom}(.*)")
 
-            m = r.match( line )
-            if m:
+            if m := r.match(line):
                 line = m.group(1) + idTo + m.group(2) + "\n"
 
-        m = nsCloseRe.match( line )
-        if m:
+        if m := nsCloseRe.match(line):
             originalNs = m.group(3)
             # print("[{0}] originalNs: '{1}' - closing".format(lineNo, originalNs))
             # print( "  " + line )
@@ -41,8 +39,7 @@ class LineMapper:
             if originalNs in self.outerNamespace:
                 outerNs, innerNs = self.outerNamespace[originalNs]
                 return "{0}}}{1}{2}::{3}{4}{5}\n".format( m.group(1), m.group(2), outerNs, innerNs, m.group(4), m.group(5))
-        m = nsRe.match( line )
-        if m:
+        if m := nsRe.match(line):
             originalNs = m.group(2)
             # print("[{0}] originalNs: '{1}'".format(lineNo, originalNs))
             # print( "  " + line )

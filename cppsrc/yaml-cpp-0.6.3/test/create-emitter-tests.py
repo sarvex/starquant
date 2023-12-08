@@ -37,38 +37,32 @@ def scalar(value, tag='', anchor='', anchor_id=0):
     emit = []
     handle = []
     if tag:
-        emit += ['VerbatimTag("%s")' % encode(tag)]
+        emit += [f'VerbatimTag("{encode(tag)}")']
     if anchor:
-        emit += ['Anchor("%s")' % encode(anchor)]
-        handle += ['OnAnchor(_, "%s")' % encode(anchor)]
+        emit += [f'Anchor("{encode(anchor)}")']
+        handle += [f'OnAnchor(_, "{encode(anchor)}")']
     if tag:
         out_tag = encode(tag)
     else:
-        if value == encode(value):
-            out_tag = '?'
-        else:
-            out_tag = '!'
-    emit += ['"%s"' % encode(value)]
-    handle += ['OnScalar(_, "%s", %s, "%s")' % (out_tag, anchor_id, encode(value))]
+        out_tag = '?' if value == encode(value) else '!'
+    emit += [f'"{encode(value)}"']
+    handle += [f'OnScalar(_, "{out_tag}", {anchor_id}, "{encode(value)}")']
     return {'emit': emit, 'handle': handle}
 
 def comment(value):
-    return {'emit': 'Comment("%s")' % value, 'handle': ''}
+    return {'emit': f'Comment("{value}")', 'handle': ''}
 
 def seq_start(tag='', anchor='', anchor_id=0, style='_'):
     emit = []
     handle = []
     if tag:
-        emit += ['VerbatimTag("%s")' % encode(tag)]
+        emit += [f'VerbatimTag("{encode(tag)}")']
     if anchor:
-        emit += ['Anchor("%s")' % encode(anchor)]
-        handle += ['OnAnchor(_, "%s")' % encode(anchor)]
-    if tag:
-        out_tag = encode(tag)
-    else:
-        out_tag = '?'
+        emit += [f'Anchor("{encode(anchor)}")']
+        handle += [f'OnAnchor(_, "{encode(anchor)}")']
+    out_tag = encode(tag) if tag else '?'
     emit += ['BeginSeq']
-    handle += ['OnSequenceStart(_, "%s", %s, %s)' % (out_tag, anchor_id, style)]
+    handle += [f'OnSequenceStart(_, "{out_tag}", {anchor_id}, {style})']
     return {'emit': emit, 'handle': handle}
 
 def seq_end():
@@ -78,16 +72,13 @@ def map_start(tag='', anchor='', anchor_id=0, style='_'):
     emit = []
     handle = []
     if tag:
-        emit += ['VerbatimTag("%s")' % encode(tag)]
+        emit += [f'VerbatimTag("{encode(tag)}")']
     if anchor:
-        emit += ['Anchor("%s")' % encode(anchor)]
-        handle += ['OnAnchor(_, "%s")' % encode(anchor)]
-    if tag:
-        out_tag = encode(tag)
-    else:
-        out_tag = '?'
+        emit += [f'Anchor("{encode(anchor)}")']
+        handle += [f'OnAnchor(_, "{encode(anchor)}")']
+    out_tag = encode(tag) if tag else '?'
     emit += ['BeginMap']
-    handle += ['OnMapStart(_, "%s", %s, %s)' % (out_tag, anchor_id, style)]
+    handle += [f'OnMapStart(_, "{out_tag}", {anchor_id}, {style})']
     return {'emit': emit, 'handle': handle}
 
 def map_end():
@@ -173,7 +164,7 @@ class Scope(object):
 
 def create_emitter_tests(out):
     out = Writer(out)
-    
+
     includes = [
         'handler_test.h',
         'yaml-cpp/yaml.h',
@@ -181,14 +172,14 @@ def create_emitter_tests(out):
         'gtest/gtest.h',
     ]
     for include in includes:
-        out.writeln('#include "%s"' % include)
+        out.writeln(f'#include "{include}"')
     out.writeln('')
 
     usings = [
         '::testing::_',
     ]
     for using in usings:
-        out.writeln('using %s;' % using)
+        out.writeln(f'using {using};')
     out.writeln('')
 
     with Scope(out, 'namespace YAML', 0) as _:
@@ -199,23 +190,23 @@ def create_emitter_tests(out):
             tests = list(gen_tests())
 
             for test in tests:
-                with Scope(out, 'TEST_F(%s, %s)' % ('GenEmitterTest', test['name']), 2) as _:
+                with Scope(out, f"TEST_F(GenEmitterTest, {test['name']})", 2) as _:
                     out.writeln('Emitter out;')
                     for event in test['events']:
                         emit = event['emit']
                         if isinstance(emit, list):
                             for e in emit:
-                                out.writeln('out << %s;' % e)
+                                out.writeln(f'out << {e};')
                         elif emit:
-                            out.writeln('out << %s;' % emit)
+                            out.writeln(f'out << {emit};')
                     out.writeln('')
                     for event in test['events']:
                         handle = event['handle']
                         if isinstance(handle, list):
                             for e in handle:
-                                out.writeln('EXPECT_CALL(handler, %s);' % e)
+                                out.writeln(f'EXPECT_CALL(handler, {e});')
                         elif handle:
-                            out.writeln('EXPECT_CALL(handler, %s);' % handle)
+                            out.writeln(f'EXPECT_CALL(handler, {handle});')
                     out.writeln('Parse(out.c_str());')
                 out.writeln('')
 

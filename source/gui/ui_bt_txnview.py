@@ -93,8 +93,7 @@ class TradesTable(QtWidgets.QTableWidget):
             for row in range(self.rowCount()):
                 row_data = []
                 for column in range(self.columnCount()):
-                    item = self.item(row, column)
-                    if item:
+                    if item := self.item(row, column):
                         row_data.append(str(item.text()))
                     else:
                         row_data.append("")
@@ -256,8 +255,7 @@ class DailyTable(QtWidgets.QTableWidget):
             for row in range(self.rowCount()):
                 row_data = []
                 for column in range(self.columnCount()):
-                    item = self.item(row, column)
-                    if item:
+                    if item := self.item(row, column):
                         row_data.append(str(item.text()))
                     else:
                         row_data.append("")
@@ -265,7 +263,6 @@ class DailyTable(QtWidgets.QTableWidget):
 
     def show_data(self, item):
         row = item.row()
-        pass
         # if row >= 0:
         #     timestr = self.item(row,0).text()
         #     dt = datetime.strptime(timestr, "%Y.%m.%d %H:%M:%S")
@@ -281,13 +278,13 @@ class DailyTable(QtWidgets.QTableWidget):
         for irow, trade in enumerate(dailyresults):
             for icol, col in enumerate(self.cols[:, 1]):
                 fg_color = None
-                if col == 'start_pos' or col == 'end_pos':
+                if col in ['start_pos', 'end_pos']:
                     val = trade.__getattribute__(col)
                     if val > 0:
-                        val = "多 " + str(val)
+                        val = f"多 {str(val)}"
                         fg_color = QtGui.QColor("red")
                     elif val < 0:
-                        val = '空 ' + str(abs(val))
+                        val = f'空 {str(abs(val))}'
                         fg_color = QtGui.QColor("green")
                     else:
                         fg_color = QtGui.QColor("white")

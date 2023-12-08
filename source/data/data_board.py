@@ -36,10 +36,7 @@ class BarGenerator:
         self.interval = interval
         self.interval_count = 0
 
-        if window:
-            self.window = window
-        else:
-            self.window = 1
+        self.window = window if window else 1
         self.window_bar = None
         self.on_window_bar = on_window_bar
 
@@ -85,14 +82,13 @@ class BarGenerator:
                 open_interest=tick.open_interest
             )
             self.tick_counts = 1
-        else:
-            if self.bar.datetime.time() != tick.datetime.time():
-                self.tick_counts += 1
-                self.bar.high_price = max(self.bar.high_price, tick.last_price)
-                self.bar.low_price = min(self.bar.low_price, tick.last_price)
-                self.bar.close_price = tick.last_price
-                self.bar.open_interest = tick.open_interest
-                self.bar.datetime = tick.datetime
+        elif self.bar.datetime.time() != tick.datetime.time():
+            self.tick_counts += 1
+            self.bar.open_interest = tick.open_interest
+            self.bar.high_price = max(self.bar.high_price, tick.last_price)
+            self.bar.low_price = min(self.bar.low_price, tick.last_price)
+            self.bar.close_price = tick.last_price
+            self.bar.datetime = tick.datetime
 
         if self.last_tick:
             volume_change = tick.volume - self.last_tick.volume
@@ -247,45 +243,35 @@ class ArrayManager(object):
         Simple moving average.
         """
         result = talib.SMA(self.close, n)
-        if array:
-            return result
-        return result[-1]
+        return result if array else result[-1]
 
     def std(self, n, array=False):
         """
         Standard deviation
         """
         result = talib.STDDEV(self.close, n)
-        if array:
-            return result
-        return result[-1]
+        return result if array else result[-1]
 
     def cci(self, n, array=False):
         """
         Commodity Channel Index (CCI).
         """
         result = talib.CCI(self.high, self.low, self.close, n)
-        if array:
-            return result
-        return result[-1]
+        return result if array else result[-1]
 
     def atr(self, n, array=False):
         """
         Average True Range (ATR).
         """
         result = talib.ATR(self.high, self.low, self.close, n)
-        if array:
-            return result
-        return result[-1]
+        return result if array else result[-1]
 
     def rsi(self, n, array=False):
         """
         Relative Strenght Index (RSI).
         """
         result = talib.RSI(self.close, n)
-        if array:
-            return result
-        return result[-1]
+        return result if array else result[-1]
 
     def macd(self, fast_period, slow_period, signal_period, array=False):
         """
@@ -294,18 +280,14 @@ class ArrayManager(object):
         macd, signal, hist = talib.MACD(
             self.close, fast_period, slow_period, signal_period
         )
-        if array:
-            return macd, signal, hist
-        return macd[-1], signal[-1], hist[-1]
+        return (macd, signal, hist) if array else (macd[-1], signal[-1], hist[-1])
 
     def adx(self, n, array=False):
         """
         ADX.
         """
         result = talib.ADX(self.high, self.low, self.close, n)
-        if array:
-            return result
-        return result[-1]
+        return result if array else result[-1]
 
     def boll(self, n, dev, array=False):
         """
@@ -338,9 +320,7 @@ class ArrayManager(object):
         up = talib.MAX(self.high, n)
         down = talib.MIN(self.low, n)
 
-        if array:
-            return up, down
-        return up[-1], down[-1]
+        return (up, down) if array else (up[-1], down[-1])
 
     def highlow(self, currentHigh, currentLow, HighPoint, LowPoint, HigherRatio, LowerRatio):
         PriceBFired = False

@@ -45,7 +45,7 @@ class RecorderEngine(BaseEngine):
             self.config_filename = configfile
         if gateway:
             self.gateway = gateway
-        filepath = Path.cwd().joinpath("etc/" + self.config_filename)
+        filepath = Path.cwd().joinpath(f"etc/{self.config_filename}")
         with open(filepath, encoding='utf8') as fd:
             self._config = yaml.load(fd)
 
@@ -85,11 +85,10 @@ class RecorderEngine(BaseEngine):
                 product=PRODUCT_CTP2VT[str(data["product"])],
                 size=data["size"],
                 pricetick=data["pricetick"],
-                net_position=True if str(
-                    data["positiontype"]) == THOST_FTDC_PT_Net else False,
+                net_position=str(data["positiontype"]) == THOST_FTDC_PT_Net,
                 long_margin_ratio=data["long_margin_ratio"],
                 short_margin_ratio=data["short_margin_ratio"],
-                full_symbol=data["full_symbol"]
+                full_symbol=data["full_symbol"],
             )
             # For option only
             if contract.product == Product.OPTION:
@@ -179,7 +178,7 @@ class RecorderEngine(BaseEngine):
 
     def process_recordercontrol_event(self, event: Event):
         msgtype = event.msg_type
-        deslist = ['@*', str(self.id), '@' + str(self.id)]
+        deslist = ['@*', str(self.id), f'@{str(self.id)}']
         if (event.destination not in deslist):
             return
         elif (msgtype == MSG_TYPE.MSG_TYPE_RECORDER_STATUS):
@@ -216,11 +215,8 @@ class RecorderEngine(BaseEngine):
 
     def put_event(self):
         """"""
-        tick_symbols = list(self.tick_recordings.keys())
-        tick_symbols.sort()
-
-        bar_symbols = list(self.bar_recordings.keys())
-        bar_symbols.sort()
+        tick_symbols = sorted(self.tick_recordings.keys())
+        bar_symbols = sorted(self.bar_recordings.keys())
         data = {
             "tick": tick_symbols,
             "bar": bar_symbols
@@ -319,8 +315,7 @@ class RecorderEngine(BaseEngine):
         return bg
 
     def subscribe(self, full_symbol: str, src: str = 'CTP.MD'):
-        contract = self.contracts.get(full_symbol, None)
-        if contract:
+        if contract := self.contracts.get(full_symbol, None):
             m = Event(type=EventType.SUBSCRIBE,
                       msgtype=MSG_TYPE.MSG_TYPE_SUBSCRIBE_MARKET_DATA)
             m.destination = src

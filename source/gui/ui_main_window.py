@@ -193,7 +193,7 @@ class MainWindow(QtWidgets.QMainWindow):
             # self._order_manager.on_order(o)
             # self.order_window.
             msg = o.serialize()
-            print('client send msg: ' + msg, datetime.now())
+            print(f'client send msg: {msg}', datetime.now())
             # print('client send msg: ' + msg)
             # text = o.destination + o.source + str(o.clientID)
             # requests.get('https://sc.ftqq.com/SCU49995T54cd0bf4d42dd8448359347830d62bd85cc3f69d085ee.send?text=%s &desp=%s'%(text,msg))
@@ -202,12 +202,12 @@ class MainWindow(QtWidgets.QMainWindow):
     def _outgoing_qry_request_handler(self, qry):
         if (self.risk_manager.passquery()):
             msg = qry.serialize()
-            print('client send msg: ' + msg)
+            print(f'client send msg: {msg}')
             self._outgoing_queue.put(msg)
 
     def _outgoing_general_request_handler(self, gr):
         msg = gr.serialize()
-        print('client send msg: ' + msg)
+        print(f'client send msg: {msg}')
         self._outgoing_queue.put(msg)
 
     #################################################################################################

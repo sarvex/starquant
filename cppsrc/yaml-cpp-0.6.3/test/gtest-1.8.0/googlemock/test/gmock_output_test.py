@@ -156,10 +156,8 @@ def GetNormalizedCommandOutputAndLeakyTests(cmd):
 class GMockOutputTest(gmock_test_utils.TestCase):
   def testOutput(self):
     (output, leaky_tests) = GetNormalizedCommandOutputAndLeakyTests(COMMAND)
-    golden_file = open(GOLDEN_PATH, 'rb')
-    golden = golden_file.read()
-    golden_file.close()
-
+    with open(GOLDEN_PATH, 'rb') as golden_file:
+      golden = golden_file.read()
     # The normalized output should match the golden file.
     self.assertEquals(golden, output)
 
@@ -173,8 +171,7 @@ class GMockOutputTest(gmock_test_utils.TestCase):
 if __name__ == '__main__':
   if sys.argv[1:] == [GENGOLDEN_FLAG]:
     (output, _) = GetNormalizedCommandOutputAndLeakyTests(COMMAND)
-    golden_file = open(GOLDEN_PATH, 'wb')
-    golden_file.write(output)
-    golden_file.close()
+    with open(GOLDEN_PATH, 'wb') as golden_file:
+      golden_file.write(output)
   else:
     gmock_test_utils.Main()

@@ -200,7 +200,7 @@ def RunAndExtractTestList(args = None):
       match = TEST_REGEX.match(line)
       if match is not None:
         test = match.group(1)
-        tests_run.append(test_case + '.' + test)
+        tests_run.append(f'{test_case}.{test}')
   return (tests_run, p.exit_code)
 
 
@@ -234,10 +234,10 @@ class GTestFilterUnitTest(gtest_test_utils.TestCase):
     """Asserts that two sets are equal."""
 
     for elem in lhs:
-      self.assert_(elem in rhs, '%s in %s' % (elem, rhs))
+      self.assert_(elem in rhs, f'{elem} in {rhs}')
 
     for elem in rhs:
-      self.assert_(elem in lhs, '%s in %s' % (elem, lhs))
+      self.assert_(elem in lhs, f'{elem} in {lhs}')
 
   def AssertPartitionIsValid(self, set_var, list_of_sets):
     """Asserts that list_of_sets is a valid partition of set_var."""
@@ -279,11 +279,7 @@ class GTestFilterUnitTest(gtest_test_utils.TestCase):
 
     # Next, tests using the command line flag.
 
-    if gtest_filter is None:
-      args = []
-    else:
-      args = ['--%s=%s' % (FILTER_FLAG, gtest_filter)]
-
+    args = [] if gtest_filter is None else [f'--{FILTER_FLAG}={gtest_filter}']
     tests_run = RunAndExtractTestList(args)[0]
     self.AssertSetEqual(tests_run, tests_to_run)
 
@@ -339,9 +335,9 @@ class GTestFilterUnitTest(gtest_test_utils.TestCase):
     tests_to_run = self.AdjustForParameterizedTests(tests_to_run)
 
     # Construct the command line.
-    args = ['--%s' % ALSO_RUN_DISABED_TESTS_FLAG]
+    args = [f'--{ALSO_RUN_DISABED_TESTS_FLAG}']
     if gtest_filter is not None:
-      args.append('--%s=%s' % (FILTER_FLAG, gtest_filter))
+      args.append(f'--{FILTER_FLAG}={gtest_filter}')
 
     tests_run = RunAndExtractTestList(args)[0]
     self.AssertSetEqual(tests_run, tests_to_run)
@@ -567,7 +563,7 @@ class GTestFilterUnitTest(gtest_test_utils.TestCase):
     """Tests that the filter flag overrides the filtering env. variable."""
 
     SetEnvVar(FILTER_ENV_VAR, 'Foo*')
-    args = ['--%s=%s' % (FILTER_FLAG, '*One')]
+    args = [f'--{FILTER_FLAG}=*One']
     tests_run = RunAndExtractTestList(args)[0]
     SetEnvVar(FILTER_ENV_VAR, None)
 

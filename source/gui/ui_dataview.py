@@ -179,9 +179,7 @@ class QuotesChart(QtGui.QWidget):
         end = datetime.now()
         start = end - timedelta(days)
         if start > end:
-            tmp = end
-            end = start
-            start = tmp
+            end, start = start, end
         bars = database_manager.load_bar_data(
             symbol=symbol,
             exchange=exchange,
@@ -489,8 +487,7 @@ class OrderBookWidget(QtWidgets.QWidget):
             self.av5_label.setText(str(tick.ask_volume_5))
 
     def process_symbol(self):
-        sym = self.symbol_line.text()
-        if sym:
+        if sym := self.symbol_line.text():
             self.symbol_signal.emit(sym)
 
     def process_days(self):

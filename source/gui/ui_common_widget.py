@@ -439,8 +439,7 @@ class CsvLoaderWidget(QtWidgets.QWidget):
         """"""
         result: str = QtWidgets.QFileDialog.getOpenFileName(
             self, filter="CSV GZ(*.csv.gz);;CSV (*.csv);;HDF5(*.hdf5);;H5(*.h5)")
-        filename = result[0]
-        if filename:
+        if filename := result[0]:
             self.file_edit.setText(filename)
 
     def load_data(self):
@@ -473,7 +472,6 @@ class CsvLoaderWidget(QtWidgets.QWidget):
                     QtWidgets.QMessageBox.Ok)
                 return
 
-            self.isbusy = True
             self.worker = CsvTickLoader(
                 file_path,
                 symbol,
@@ -489,11 +487,8 @@ class CsvLoaderWidget(QtWidgets.QWidget):
                 datetime_format,
                 saveto
             )
-            self.worker.moveToThread(self.thread)
-            self.worker.finishmsg.connect(self.load_finished)
-            self.worker.startsig.emit(fileformat)
-            # self.thread.started.connect(self.worker.load_data)
-            # self.thread.finished.connect(self.worker.deleteLater)
+                # self.thread.started.connect(self.worker.load_data)
+                # self.thread.finished.connect(self.worker.deleteLater)
 
         else:
             interval = self.interval_combo.currentData()
@@ -510,7 +505,6 @@ class CsvLoaderWidget(QtWidgets.QWidget):
                     QtWidgets.QMessageBox.Ok)
                 return
 
-            self.isbusy = True
             self.worker = CsvBarLoader(
                 file_path,
                 symbol,
@@ -526,9 +520,11 @@ class CsvLoaderWidget(QtWidgets.QWidget):
                 datetime_format,
                 saveto
             )
-            self.worker.moveToThread(self.thread)
-            self.worker.finishmsg.connect(self.load_finished)
-            self.worker.startsig.emit(fileformat)
+
+        self.isbusy = True
+        self.worker.moveToThread(self.thread)
+        self.worker.finishmsg.connect(self.load_finished)
+        self.worker.startsig.emit(fileformat)
             # self.thread.started.connect(self.worker.load_data)
             # self.thread.finished.connect(self.worker.deleteLater)
             # self.thread.start()
@@ -650,12 +646,7 @@ class DataDownloaderWidget(QtWidgets.QWidget):
         if data_source == 'RQData':
             data = rqdata_client.query_history(req)
 
-        elif data_source == 'Tushare':
-            QtWidgets.QMessageBox().information(
-                None, 'Info', '待实现!',
-                QtWidgets.QMessageBox.Ok)
-            data = None
-        elif data_source == 'JoinQuant':
+        elif data_source in {'Tushare', 'JoinQuant'}:
             QtWidgets.QMessageBox().information(
                 None, 'Info', '待实现!',
                 QtWidgets.QMessageBox.Ok)
@@ -669,7 +660,7 @@ class DataDownloaderWidget(QtWidgets.QWidget):
         self.thread = None
 
     def write_log(self, log: str):
-        logmsg = str(datetime.now()) + " : " + log
+        logmsg = f"{str(datetime.now())} : {log}"
         self.log_signal.emit(logmsg)
 
 
@@ -683,7 +674,7 @@ class RecorderManager(QtWidgets.QWidget):
 
     def __init__(self, contracts: dict = {}):
         super().__init__()
-        self.full_symbols = [c for c in contracts.keys()]
+        self.full_symbols = list(contracts.keys())
         self.init_ui()
         self.register_event()
         self.engineid = ''
@@ -795,22 +786,24 @@ class RecorderManager(QtWidgets.QWidget):
         self.signal_recorder_update.connect(self.process_update_event)
 
     def start_engine(self):
-        m = Event(type=EventType.RECORDER_CONTROL,
-                  des='@' + self.engineid,
-                  src=self.data_source.currentText(),
-                  msgtype=MSG_TYPE.MSG_TYPE_RECORDER_START
-                  )
+        m = Event(
+            type=EventType.RECORDER_CONTROL,
+            des=f'@{self.engineid}',
+            src=self.data_source.currentText(),
+            msgtype=MSG_TYPE.MSG_TYPE_RECORDER_START,
+        )
         self.signal_recorder_out.emit(m)
 
     def stop_engine(self):
         mbox = QtWidgets.QMessageBox().question(None, 'confirm', 'are you sure',
                                                 QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
         if mbox == QtWidgets.QMessageBox.Yes:
-            m = Event(type=EventType.RECORDER_CONTROL,
-                      des='@' + self.engineid,
-                      src='0',
-                      msgtype=MSG_TYPE.MSG_TYPE_RECORDER_STOP
-                      )
+            m = Event(
+                type=EventType.RECORDER_CONTROL,
+                des=f'@{self.engineid}',
+                src='0',
+                msgtype=MSG_TYPE.MSG_TYPE_RECORDER_STOP,
+            )
             self.signal_recorder_out.emit(m)
 
     def refresh_status(self):
@@ -882,45 +875,49 @@ class RecorderManager(QtWidgets.QWidget):
         """"""
         full_symbol = self.symbol_line.text()
 
-        m = Event(type=EventType.RECORDER_CONTROL,
-                  des='@' + self.engineid,
-                  src=self.data_source.currentText(),
-                  data=full_symbol,
-                  msgtype=MSG_TYPE.MSG_TYPE_RECORDER_ADD_BAR
-                  )
+        m = Event(
+            type=EventType.RECORDER_CONTROL,
+            des=f'@{self.engineid}',
+            src=self.data_source.currentText(),
+            data=full_symbol,
+            msgtype=MSG_TYPE.MSG_TYPE_RECORDER_ADD_BAR,
+        )
         self.signal_recorder_out.emit(m)
 
     def add_tick_recording(self):
         """"""
         full_symbol = self.symbol_line.text()
-        m = Event(type=EventType.RECORDER_CONTROL,
-                  des='@' + self.engineid,
-                  src=self.data_source.currentText(),
-                  data=full_symbol,
-                  msgtype=MSG_TYPE.MSG_TYPE_RECORDER_ADD_TICK
-                  )
+        m = Event(
+            type=EventType.RECORDER_CONTROL,
+            des=f'@{self.engineid}',
+            src=self.data_source.currentText(),
+            data=full_symbol,
+            msgtype=MSG_TYPE.MSG_TYPE_RECORDER_ADD_TICK,
+        )
         self.signal_recorder_out.emit(m)
 
     def remove_bar_recording(self):
         """"""
         full_symbol = self.symbol_line.text()
-        m = Event(type=EventType.RECORDER_CONTROL,
-                  des='@' + self.engineid,
-                  src='0',
-                  data=full_symbol,
-                  msgtype=MSG_TYPE.MSG_TYPE_RECORDER_REMOVE_BAR
-                  )
+        m = Event(
+            type=EventType.RECORDER_CONTROL,
+            des=f'@{self.engineid}',
+            src='0',
+            data=full_symbol,
+            msgtype=MSG_TYPE.MSG_TYPE_RECORDER_REMOVE_BAR,
+        )
         self.signal_recorder_out.emit(m)
 
     def remove_tick_recording(self):
         """"""
         full_symbol = self.symbol_line.text()
-        m = Event(type=EventType.RECORDER_CONTROL,
-                  des='@' + self.engineid,
-                  src='0',
-                  data=full_symbol,
-                  msgtype=MSG_TYPE.MSG_TYPE_RECORDER_REMOVE_TICK
-                  )
+        m = Event(
+            type=EventType.RECORDER_CONTROL,
+            des=f'@{self.engineid}',
+            src='0',
+            data=full_symbol,
+            msgtype=MSG_TYPE.MSG_TYPE_RECORDER_REMOVE_TICK,
+        )
         self.signal_recorder_out.emit(m)
 
 
@@ -964,11 +961,10 @@ class ContractManager(QtWidgets.QWidget):
                 product=PRODUCT_CTP2VT[str(data["product"])],
                 size=data["size"],
                 pricetick=data["pricetick"],
-                net_position=True if str(
-                    data["positiontype"]) == THOST_FTDC_PT_Net else False,
+                net_position=str(data["positiontype"]) == THOST_FTDC_PT_Net,
                 long_margin_ratio=data["long_margin_ratio"],
                 short_margin_ratio=data["short_margin_ratio"],
-                full_symbol=data["full_symbol"]
+                full_symbol=data["full_symbol"],
             )
             # For option only
             if contract.product == Product.OPTION:
@@ -1018,9 +1014,7 @@ class ContractManager(QtWidgets.QWidget):
         """
         Show contracts by symbol
         """
-        flt = str(self.filter_line.text()).upper()
-
-        if flt:
+        if flt := str(self.filter_line.text()).upper():
             contracts = [
                 contract for contract in self.contracts.values() if flt in contract.full_symbol
             ]
@@ -1056,7 +1050,8 @@ class StatusThread(QtCore.QThread):
             cpuPercent = psutil.cpu_percent()
             memoryPercent = psutil.virtual_memory().percent
             self.status_update.emit(
-                'CPU Usage: ' + str(cpuPercent) + '% Memory Usage: ' + str(memoryPercent) + '%')
+                f'CPU Usage: {str(cpuPercent)}% Memory Usage: {str(memoryPercent)}%'
+            )
             self.sleep(2)
 
 
@@ -1107,10 +1102,7 @@ class GlobalDialog(QtWidgets.QDialog):
             value_text = widget.text()
 
             if field_type == bool:
-                if value_text == "True":
-                    field_value = True
-                else:
-                    field_value = False
+                field_value = value_text == "True"
             else:
                 field_value = field_type(value_text)
 

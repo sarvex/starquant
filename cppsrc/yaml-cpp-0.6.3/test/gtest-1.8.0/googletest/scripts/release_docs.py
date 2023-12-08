@@ -93,7 +93,7 @@ class WikiBrancher(object):
     self.project, svn_root_path = common.GetSvnInfo()
     if self.project not in ('googletest', 'googlemock'):
       sys.exit('This script must be run in a gtest or gmock SVN workspace.')
-    self.wiki_dir = svn_root_path + '/wiki'
+    self.wiki_dir = f'{svn_root_path}/wiki'
     # Turn '2.6' to 'V2_6_'.
     self.version_prefix = 'V' + dot_version.replace('.', '_') + '_'
     self.files_to_branch = self.GetFilesToBranch()

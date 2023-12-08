@@ -29,16 +29,16 @@ def generate_full_symbol(exchange: Exchange, symbol: str, type: str = 'F'):
     product = ''
     contractno = ''
     fullsym = symbol
-    if symbol:
-        if type == 'F' or type == 'O':
+    if type in {'F', 'O'}:
+        if symbol:
             for count, word in enumerate(symbol):
                 if word.isdigit():
                     break
             product = symbol[:count]
             contractno = symbol[count:]
-            fullsym = exchange.value + ' ' + type + ' '\
-                + product.upper() + ' ' + contractno
-        elif type == 'S':
+            fullsym = f'{exchange.value} {type} {product.upper()} {contractno}'
+    elif type == 'S':
+        if symbol:
             combo = symbol.split(' ', 1)[1]
             symbol1 = combo.split('&')[0]
             symbol2 = combo.split('&')[1]
@@ -50,10 +50,9 @@ def generate_full_symbol(exchange: Exchange, symbol: str, type: str = 'F'):
             for count, word in enumerate(symbol2):
                 if word.isdigit():
                     break
-            product += ('&' + symbol2[:count])
-            contractno += ('&' + symbol2[count:])
-            fullsym = exchange.value + ' ' + type + ' '\
-                + product.upper() + ' ' + contractno
+            product += f'&{symbol2[:count]}'
+            contractno += f'&{symbol2[count:]}'
+            fullsym = f'{exchange.value} {type} {product.upper()} {contractno}'
     return fullsym
 
 
@@ -149,16 +148,14 @@ def round_to_pricetick(price: float, pricetick: float):
     """
     Round price to price tick value.
     """
-    rounded = round(price / pricetick, 0) * pricetick
-    return rounded
+    return round(price / pricetick, 0) * pricetick
 
 
 def round_to(value: float, target: float):
     """
     Round price to price tick value.
     """
-    rounded = int(round(value / target)) * target
-    return rounded
+    return int(round(value / target)) * target
 
 
 def virtual(func: Callable):

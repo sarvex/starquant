@@ -20,33 +20,31 @@ def fixAllFilesInDir( dir ):
     return changedFiles
 
 def fixFile( path ):
-    f = open( path, 'r' )
-    lines = []
-    changed = 0
-    for line in f:
-        trimmed = line.rstrip() + "\n"
-        trimmed = trimmed.replace('\t', '    ')
-        if trimmed != line:
-            changed = changed +1
-        lines.append( trimmed )
-    f.close()
+    with open( path, 'r' ) as f:
+        lines = []
+        changed = 0
+        for line in f:
+            trimmed = line.rstrip() + "\n"
+            trimmed = trimmed.replace('\t', '    ')
+            if trimmed != line:
+                changed = changed +1
+            lines.append( trimmed )
     if changed > 0:
         global changedFiles
         changedFiles = changedFiles + 1
-        print( path + ":" )
-        print( " - fixed " + str(changed) + " line(s)" )
-        altPath = path + ".backup"
+        print(f"{path}:")
+        print(f" - fixed {str(changed)} line(s)")
+        altPath = f"{path}.backup"
         os.rename( path, altPath )
-        f2 = open( path, 'w' )
-        for line in lines:
-            f2.write( line )
-        f2.close()
+        with open( path, 'w' ) as f2:
+            for line in lines:
+                f2.write( line )
         os.remove( altPath )
         return True
     return False
 
 changedFiles = fixAllFilesInDir(catchPath)
 if changedFiles > 0:
-    print( "Fixed " + str(changedFiles) + " file(s)" )
+    print(f"Fixed {str(changedFiles)} file(s)")
 else:
     print( "No trailing whitespace found" )

@@ -62,11 +62,10 @@ class RqdataClient:
         CZCE product of RQData has symbol like "TA1905" while
         vt symbol is "TA905.CZCE" so need to add "1" in symbol.
         """
-        if exchange in [Exchange.SSE, Exchange.SZSE]:
-            if exchange == Exchange.SSE:
-                rq_symbol = f"{symbol}.XSHG"
-            else:
-                rq_symbol = f"{symbol}.XSHE"
+        if exchange == Exchange.SSE:
+            return f"{symbol}.XSHG"
+        elif exchange == Exchange.SZSE:
+            return f"{symbol}.XSHE"
         else:
             if exchange is not Exchange.CZCE:
                 return symbol.upper()
@@ -80,14 +79,8 @@ class RqdataClient:
             year = symbol[count]
             month = symbol[count + 1:]
 
-            if year == "9":
-                year = "1" + year
-            else:
-                year = "2" + year
-
-            rq_symbol = f"{product}{year}{month}".upper()
-
-        return rq_symbol
+            year = f"1{year}" if year == "9" else f"2{year}"
+            return f"{product}{year}{month}".upper()
 
     def query_bar(
         self,

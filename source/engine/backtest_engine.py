@@ -82,12 +82,7 @@ class OptimizationSetting:
         values = self.params.values()
         products = list(product(*values))
 
-        settings = []
-        for p in products:
-            setting = dict(zip(keys, p))
-            settings.append(setting)
-
-        return settings
+        return [dict(zip(keys, p)) for p in products]
 
     def generate_setting_ga(self):
         """"""
@@ -223,10 +218,7 @@ class BacktestingEngine:
             self.capital = capital
 
         if end:
-            if type(end) == date:
-                self.end = datetime(end.year,end.month,end.day)
-            else:
-                self.end = end
+            self.end = datetime(end.year,end.month,end.day) if type(end) == date else end
         else:
             self.end = datetime.now()
 
@@ -264,18 +256,18 @@ class BacktestingEngine:
                 self.history_data_startix = 0
                 self.history_data_endix = len(self.history_data)
             elif datasource == "Memory":
-                startix = 0
-                endix = 0
                 totalbarlist = sqglobal.history_bar[self.full_symbol]
                 if not totalbarlist:
                     self.output('数据为空，请先读入')
                     return
                 totalbars = len(totalbarlist)
+                startix = 0
                 for i in range(totalbars):
                     if totalbarlist[i].datetime < self.start:
                         continue
                     startix = i
                     break
+                endix = 0
                 for i in reversed(range(totalbars)):
                     if totalbarlist[i].datetime > self.end:
                         continue
@@ -285,38 +277,37 @@ class BacktestingEngine:
                 self.history_data_startix = startix
                 self.history_data_endix = endix
                 self.history_data = totalbarlist
-        else:
-            if datasource == "DataBase":
-                self.history_data = load_tick_data(
-                    self.symbol,
-                    self.exchange,
-                    self.start,
-                    self.end
-                )
-                self.history_data_startix = 0
-                self.history_data_endix = len(self.history_data)
-            elif datasource == "Memory":
-                startix = 0
-                endix = 0
-                totalticklist = sqglobal.history_tick[self.full_symbol]
-                if not totalticklist:
-                    self.output('数据为空，请先读入')
-                    return
-                totalticks = len(totalticklist)
-                for i in range(totalticks):
-                    if totalticklist[i].datetime < self.start:
-                        continue
-                    startix = i
-                    break
-                for i in reversed(range(totalticks)):
-                    if totalticklist[i].datetime > self.end:
-                        continue
-                    endix = i
-                    break
-                endix = min(endix + 1, totalticks)
-                self.history_data = totalticklist
-                self.history_data_startix = startix
-                self.history_data_endix = endix
+        elif datasource == "DataBase":
+            self.history_data = load_tick_data(
+                self.symbol,
+                self.exchange,
+                self.start,
+                self.end
+            )
+            self.history_data_startix = 0
+            self.history_data_endix = len(self.history_data)
+        elif datasource == "Memory":
+            startix = 0
+            endix = 0
+            totalticklist = sqglobal.history_tick[self.full_symbol]
+            if not totalticklist:
+                self.output('数据为空，请先读入')
+                return
+            totalticks = len(totalticklist)
+            for i in range(totalticks):
+                if totalticklist[i].datetime < self.start:
+                    continue
+                startix = i
+                break
+            for i in reversed(range(totalticks)):
+                if totalticklist[i].datetime > self.end:
+                    continue
+                endix = i
+                break
+            endix = min(endix + 1, totalticks)
+            self.history_data = totalticklist
+            self.history_data_startix = startix
+            self.history_data_endix = endix
 
         self.output(
             f"历史数据加载完成，数据量：{self.history_data_endix - self.history_data_startix}")
@@ -327,11 +318,7 @@ class BacktestingEngine:
             self.output('回测数据为空，直接结束回测')
             return
 
-        if self.mode == BacktestingMode.BAR:
-            func = self.new_bar
-        else:
-            func = self.new_tick
-
+        func = self.new_bar if self.mode == BacktestingMode.BAR else self.new_tick
         self.strategy.on_init()
 
         # Use the first [days] of history data for initializing strategy
@@ -381,10 +368,7 @@ class BacktestingEngine:
             d = trade.datetime.date()
             t = trade.datetime.time()
             if t > time(hour=17, minute=0):
-                if d.weekday() == 4:
-                    d = d + timedelta(days=3)
-                else:
-                    d = d + timedelta(days=1)
+                d = d + timedelta(days=3) if d.weekday() == 4 else d + timedelta(days=1)
             elif t < time(hour=8, minute=0):  # 周六凌晨算周一
                 if d.weekday() == 5:
                     d = d + timedelta(days=2)

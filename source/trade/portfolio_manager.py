@@ -61,7 +61,7 @@ class OffsetConverter:
 
     def get_position_holding(self, acc: str, full_symbol: str):
         """"""
-        holdingid = acc + "." + full_symbol
+        holdingid = f"{acc}.{full_symbol}"
         holding = self.holdings.get(holdingid, None)
         if not holding:
             contract = self.main_engine.get_contract(full_symbol)
@@ -91,13 +91,7 @@ class OffsetConverter:
         Check if the contract needs offset convert.
         """
         contract = self.main_engine.get_contract(full_symbol)
-        if not contract:
-            return False
-        # Only contracts with long-short position mode requires convert
-        if not contract.net_position:
-            return True
-        else:
-            return False
+        return False if not contract else not contract.net_position
 
 
 class PositionHolding:
@@ -147,14 +141,13 @@ class PositionHolding:
 
     def update_order(self, order: OrderData):
         """"""
-        reqid = str(order.clientID) + '.' + str(order.client_order_id)
+        reqid = f'{str(order.clientID)}.{str(order.client_order_id)}'
         if reqid in self.active_requests:
             self.active_requests.pop(reqid)
         if order.is_active():
             self.active_orders[order.server_order_id] = order
-        else:
-            if order.server_order_id in self.active_orders:
-                self.active_orders.pop(order.server_order_id)
+        elif order.server_order_id in self.active_orders:
+            self.active_orders.pop(order.server_order_id)
 
         self.calculate_frozen()
 
@@ -162,7 +155,7 @@ class PositionHolding:
         """"""
         # gateway_name, orderid = vt_orderid.split(".")
         # order = req.create_order_data(orderid, gateway_name)
-        reqid = str(req.clientID) + '.' + str(req.client_order_id)
+        reqid = f'{str(req.clientID)}.{str(req.client_order_id)}'
         self.active_requests[reqid] = req
 
         self.calculate_frozen()
@@ -172,51 +165,65 @@ class PositionHolding:
         old_long_pos = self.long_pos
         old_short_pos = self.short_pos
         if trade.direction == Direction.LONG:
-            if trade.offset == Offset.OPEN:
+            if (
+                trade.offset != Offset.OPEN
+                and trade.offset != Offset.CLOSETODAY
+                and trade.offset != Offset.CLOSEYESTERDAY
+                and trade.offset == Offset.CLOSE
+                and trade.exchange == Exchange.SHFE
+                or trade.offset != Offset.OPEN
+                and trade.offset != Offset.CLOSETODAY
+                and trade.offset == Offset.CLOSEYESTERDAY
+            ):
+                self.short_yd -= trade.volume
+            elif (
+                trade.offset != Offset.OPEN
+                and trade.offset != Offset.CLOSETODAY
+                and trade.offset == Offset.CLOSE
+            ):
+                self.short_td -= trade.volume
+
+                if self.short_td < 0:
+                    self.short_yd += self.short_td
+                    self.short_td = 0
+            elif trade.offset == Offset.OPEN:
                 self.long_td += trade.volume
             elif trade.offset == Offset.CLOSETODAY:
                 self.short_td -= trade.volume
-            elif trade.offset == Offset.CLOSEYESTERDAY:
-                self.short_yd -= trade.volume
-            elif trade.offset == Offset.CLOSE:
-                if trade.exchange == Exchange.SHFE:
-                    self.short_yd -= trade.volume
-                else:
-                    self.short_td -= trade.volume
+        elif (
+            trade.offset != Offset.OPEN
+            and trade.offset != Offset.CLOSETODAY
+            and trade.offset != Offset.CLOSEYESTERDAY
+            and trade.offset == Offset.CLOSE
+            and trade.exchange == Exchange.SHFE
+            or trade.offset != Offset.OPEN
+            and trade.offset != Offset.CLOSETODAY
+            and trade.offset == Offset.CLOSEYESTERDAY
+        ):
+            self.long_yd -= trade.volume
+        elif (
+            trade.offset != Offset.OPEN
+            and trade.offset != Offset.CLOSETODAY
+            and trade.offset == Offset.CLOSE
+        ):
+            self.long_td -= trade.volume
 
-                    if self.short_td < 0:
-                        self.short_yd += self.short_td
-                        self.short_td = 0
-        else:
-            if trade.offset == Offset.OPEN:
-                self.short_td += trade.volume
-            elif trade.offset == Offset.CLOSETODAY:
-                self.long_td -= trade.volume
-            elif trade.offset == Offset.CLOSEYESTERDAY:
-                self.long_yd -= trade.volume
-            elif trade.offset == Offset.CLOSE:
-                if trade.exchange == Exchange.SHFE:
-                    self.long_yd -= trade.volume
-                else:
-                    self.long_td -= trade.volume
+            if self.long_td < 0:
+                self.long_yd += self.long_td
+                self.long_td = 0
 
-                    if self.long_td < 0:
-                        self.long_yd += self.long_td
-                        self.long_td = 0
-
+        elif trade.offset == Offset.OPEN:
+            self.short_td += trade.volume
+        elif trade.offset == Offset.CLOSETODAY:
+            self.long_td -= trade.volume
         self.long_pos = self.long_td + self.long_yd
         self.short_pos = self.short_td + self.short_yd
         if self.long_pos:
             self.long_price = (old_long_pos * self.long_price +
                                (self.long_pos - old_long_pos) * trade.price) / self.long_pos
-        else:
-            pass
-            # self.long_price = 0.0
         if self.short_pos:
             self.short_price = (old_short_pos * self.short_price +
                                 (self.short_pos - old_short_pos) * trade.price) / self.short_pos
-        else:
-            pass
             # self.short_price = 0.0
 
     def calculate_frozen(self):

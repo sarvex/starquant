@@ -87,10 +87,7 @@ def GetExitStatus(exit_code):
   else:
     # On Unix, os.WEXITSTATUS() must be used to extract the exit status
     # from the result of os.system().
-    if os.WIFEXITED(exit_code):
-      return os.WEXITSTATUS(exit_code)
-    else:
-      return -1
+    return os.WEXITSTATUS(exit_code) if os.WIFEXITED(exit_code) else -1
 
 
 # Suppresses the "Invalid const name" lint complaint

@@ -16,17 +16,15 @@ cmakePath = os.path.join(catchPath, 'CMakeLists.txt')
 
 class Version:
     def __init__(self):
-        f = open( versionPath, 'r' )
-        for line in f:
-            m = versionParser.match( line )
-            if m:
-                self.variableDecl = m.group(1)
-                self.majorVersion = int(m.group(2))
-                self.minorVersion = int(m.group(3))
-                self.patchNumber = int(m.group(4))
-                self.branchName = m.group(5)
-                self.buildNumber = int(m.group(6))
-        f.close()
+        with open( versionPath, 'r' ) as f:
+            for line in f:
+                if m := versionParser.match(line):
+                    self.variableDecl = m.group(1)
+                    self.majorVersion = int(m.group(2))
+                    self.minorVersion = int(m.group(3))
+                    self.patchNumber = int(m.group(4))
+                    self.branchName = m.group(5)
+                    self.buildNumber = int(m.group(6))
 
     def nonDevelopRelease(self):
         if self.branchName != "":
@@ -59,19 +57,18 @@ class Version:
     def getVersionString(self):
         versionString = '{0}.{1}.{2}'.format( self.majorVersion, self.minorVersion, self.patchNumber )
         if self.branchName != "":
-            versionString = versionString + '-{0}.{1}'.format( self.branchName, self.buildNumber )
+            versionString += '-{0}.{1}'.format( self.branchName, self.buildNumber )
         return versionString
 
     def updateVersionFile(self):
-        f = open( versionPath, 'r' )
-        lines = []
-        for line in f:
-            m = versionParser.match( line )
-            if m:
-                lines.append( '{0}( {1}, {2}, {3}, "{4}", {5} );'.format( self.variableDecl, self.majorVersion, self.minorVersion, self.patchNumber, self.branchName, self.buildNumber ) )
-            else:
-                lines.append( line.rstrip() )
-        f.close()
+        with open( versionPath, 'r' ) as f:
+            lines = []
+            for line in f:
+                m = versionParser.match( line )
+                if m:
+                    lines.append( '{0}( {1}, {2}, {3}, "{4}", {5} );'.format( self.variableDecl, self.majorVersion, self.minorVersion, self.patchNumber, self.branchName, self.buildNumber ) )
+                else:
+                    lines.append( line.rstrip() )
         f = open( versionPath, 'w' )
         for line in lines:
             f.write( line + "\n" )
@@ -82,13 +79,10 @@ def updateReadmeFile(version):
     downloadParser = re.compile( r'<a href=\"https://github.com/catchorg/Catch2/releases/download/v\d+\.\d+\.\d+/catch.hpp\">' )
     success, wandboxLink = updateWandbox.uploadFiles()
     if not success:
-        print('Error when uploading to wandbox: {}'.format(wandboxLink))
+        print(f'Error when uploading to wandbox: {wandboxLink}')
         exit(1)
-    f = open( readmePath, 'r' )
-    lines = []
-    for line in f:
-        lines.append( line.rstrip() )
-    f.close()
+    with open( readmePath, 'r' ) as f:
+        lines = [line.rstrip() for line in f]
     f = open( readmePath, 'w' )
     for line in lines:
         line = downloadParser.sub( r'<a href="https://github.com/catchorg/Catch2/releases/download/v{0}/catch.hpp">'.format(version.getVersionString()) , line)
@@ -114,11 +108,11 @@ def updateVersionDefine(version):
     with open(definePath, 'w') as file:
         for line in lines:
             if '#define CATCH_VERSION_MAJOR' in line:
-                file.write('#define CATCH_VERSION_MAJOR {}\n'.format(version.majorVersion))
+                file.write(f'#define CATCH_VERSION_MAJOR {version.majorVersion}\n')
             elif '#define CATCH_VERSION_MINOR' in line:
-                file.write('#define CATCH_VERSION_MINOR {}\n'.format(version.minorVersion))
+                file.write(f'#define CATCH_VERSION_MINOR {version.minorVersion}\n')
             elif '#define CATCH_VERSION_PATCH' in line:
-                file.write('#define CATCH_VERSION_PATCH {}\n'.format(version.patchNumber))
+                file.write(f'#define CATCH_VERSION_PATCH {version.patchNumber}\n')
             else:
                 file.write(line)
 
@@ -137,8 +131,12 @@ def performUpdates(version):
     # but this works for now
     import shutil
     for rep in ('automake', 'tap', 'teamcity'):
-        sourceFile = os.path.join(catchPath, 'include/reporters/catch_reporter_{}.hpp'.format(rep))
-        destFile = os.path.join(catchPath, 'single_include', 'catch2', 'catch_reporter_{}.hpp'.format(rep))
+        sourceFile = os.path.join(
+            catchPath, f'include/reporters/catch_reporter_{rep}.hpp'
+        )
+        destFile = os.path.join(
+            catchPath, 'single_include', 'catch2', f'catch_reporter_{rep}.hpp'
+        )
         shutil.copyfile(sourceFile, destFile)
 
     updateReadmeFile(version)

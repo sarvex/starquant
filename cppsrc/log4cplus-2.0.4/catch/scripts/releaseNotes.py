@@ -17,7 +17,7 @@ versionPath = os.path.join( rootPath, "internal/catch_version.hpp" )
 
 
 hashes = runAndCapture( ['git', 'log', '-2', '--format="%H"', versionPath] )
-lines = runAndCapture( ['git', 'log', hashes[1] + ".." + hashes[0], catchPath] )
+lines = runAndCapture(['git', 'log', f"{hashes[1]}..{hashes[0]}", catchPath])
 
 prevLine = ""
 messages = []
@@ -26,7 +26,9 @@ issues = {}
 
 def getIssueTitle( issueNumber ):
     try:
-        s = urllib2.urlopen("https://api.github.com/repos/philsquared/catch/issues/" + issueNumber ).read()        
+        s = urllib2.urlopen(
+            f"https://api.github.com/repos/philsquared/catch/issues/{issueNumber}"
+        ).read()
     except:
         return "#HTTP Error#"
 
@@ -38,14 +40,12 @@ def getIssueTitle( issueNumber ):
 
 for line in lines:
     if line.startswith( "commit"):
-        pass
-    elif line.startswith( "Author:"):
+        continue
+    if line.startswith( "Author:"):
         pass
     elif line.startswith( "Date:"):
         dates.append( line[5:].lstrip() )
-    elif line == "" and prevLine == "":
-        pass
-    else:
+    elif line != "" or prevLine != "":
         prevLine = line
         match = issueNumberRe.match( line )
         line2 = ""

@@ -96,8 +96,7 @@ def normalizeFilepath(line):
         # make paths relative to Catch root
         line = line.replace(catchPath + os.sep, '')
 
-    m = langFilenameParser.match(line)
-    if m:
+    if m := langFilenameParser.match(line):
         filepath = m.group(0)
         # go from \ in windows paths to /
         filepath = filepath.replace('\\', '/')
@@ -110,9 +109,7 @@ def normalizeFilepath(line):
 def filterLine(line, isCompact):
     line = normalizeFilepath(line)
 
-    # strip source line numbers
-    m = filelocParser.match(line)
-    if m:
+    if m := filelocParser.match(line):
         # note that this also strips directories, leaving only the filename
         filename, lnum = m.groups()
         lnum = ":<line number>" if lnum else ""
@@ -149,17 +146,15 @@ def filterLine(line, isCompact):
 
 def approve(baseName, args):
     global overallResult
-    args[0:0] = [cmdPath]
+    args[:0] = [cmdPath]
     if not os.path.exists(cmdPath):
-        raise Exception("Executable doesn't exist at " + cmdPath)
+        raise Exception(f"Executable doesn't exist at {cmdPath}")
     baselinesPath = os.path.join(rootPath, '{0}.approved.txt'.format(baseName))
     rawResultsPath = os.path.join(rootPath, '_{0}.tmp'.format(baseName))
     filteredResultsPath = os.path.join(rootPath, '{0}.unapproved.txt'.format(baseName))
 
-    f = open(rawResultsPath, 'w')
-    subprocess.call(args, stdout=f, stderr=f)
-    f.close()
-
+    with open(rawResultsPath, 'w') as f:
+        subprocess.call(args, stdout=f, stderr=f)
     rawFile = io.open(rawResultsPath, 'r', encoding='utf-8', errors='surrogateescape')
     filteredFile = io.open(filteredResultsPath, 'w', encoding='utf-8', errors='surrogateescape')
     for line in rawFile:
@@ -169,10 +164,9 @@ def approve(baseName, args):
 
     os.remove(rawResultsPath)
     print()
-    print(baseName + ":")
+    print(f"{baseName}:")
     if os.path.exists(baselinesPath):
-        diffResult = diffFiles(baselinesPath, filteredResultsPath)
-        if diffResult:
+        if diffResult := diffFiles(baselinesPath, filteredResultsPath):
             print('\n'.join(diffResult))
             print("  \n****************************\n  \033[91mResults differed")
             if len(diffResult) > overallResult:
@@ -188,7 +182,7 @@ def approve(baseName, args):
 
 
 print("Running approvals against executable:")
-print("  " + cmdPath)
+print(f"  {cmdPath}")
 
 
 # ## Keep default reporters here ##

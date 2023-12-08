@@ -22,9 +22,9 @@ def approveFile( approvedFile, unapprovedFile ):
         if os.path.exists( approvedFile ):
             os.remove( approvedFile )
         os.rename( unapprovedFile, approvedFile )
-        print( "approved " + justFilename )
+        print(f"approved {justFilename}")
     else:
-        print( "approval file " + justFilename + " does not exist" )
+        print(f"approval file {justFilename} does not exist")
 
 if files:
     for unapprovedFile in files:

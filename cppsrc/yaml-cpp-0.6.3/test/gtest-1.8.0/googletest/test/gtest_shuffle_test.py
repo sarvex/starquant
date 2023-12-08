@@ -60,11 +60,11 @@ def AlsoRunDisabledTestsFlag():
 
 
 def FilterFlag(test_filter):
-  return '--gtest_filter=%s' % (test_filter,)
+  return f'--gtest_filter={test_filter}'
 
 
 def RepeatFlag(n):
-  return '--gtest_repeat=%s' % (n,)
+  return f'--gtest_repeat={n}'
 
 
 def ShuffleFlag():
@@ -72,7 +72,7 @@ def ShuffleFlag():
 
 
 def RandomSeedFlag(n):
-  return '--gtest_random_seed=%s' % (n,)
+  return f'--gtest_random_seed={n}'
 
 
 def RunAndReturnOutput(extra_env, args):
@@ -121,7 +121,7 @@ def GetTestCases(tests):
   test_cases = []
   for test in tests:
     test_case = test.split('.')[0]
-    if not test_case in test_cases:
+    if test_case not in test_cases:
       test_cases.append(test_case)
 
   return test_cases
@@ -202,43 +202,46 @@ class GTestShuffleUnitTest(gtest_test_utils.TestCase):
   def testShuffleDoesNotRepeatTest(self):
     for test in SHUFFLED_ALL_TESTS:
       self.assertEqual(1, SHUFFLED_ALL_TESTS.count(test),
-                       '%s appears more than once' % (test,))
+                       f'{test} appears more than once')
     for test in SHUFFLED_ACTIVE_TESTS:
       self.assertEqual(1, SHUFFLED_ACTIVE_TESTS.count(test),
-                       '%s appears more than once' % (test,))
+                       f'{test} appears more than once')
     for test in SHUFFLED_FILTERED_TESTS:
-      self.assertEqual(1, SHUFFLED_FILTERED_TESTS.count(test),
-                       '%s appears more than once' % (test,))
+      self.assertEqual(
+          1,
+          SHUFFLED_FILTERED_TESTS.count(test),
+          f'{test} appears more than once',
+      )
     for test in SHUFFLED_SHARDED_TESTS:
       self.assertEqual(1, SHUFFLED_SHARDED_TESTS.count(test),
-                       '%s appears more than once' % (test,))
+                       f'{test} appears more than once')
 
   def testShuffleDoesNotCreateNewTest(self):
     for test in SHUFFLED_ALL_TESTS:
-      self.assert_(test in ALL_TESTS, '%s is an invalid test' % (test,))
+      self.assert_(test in ALL_TESTS, f'{test} is an invalid test')
     for test in SHUFFLED_ACTIVE_TESTS:
-      self.assert_(test in ACTIVE_TESTS, '%s is an invalid test' % (test,))
+      self.assert_(test in ACTIVE_TESTS, f'{test} is an invalid test')
     for test in SHUFFLED_FILTERED_TESTS:
-      self.assert_(test in FILTERED_TESTS, '%s is an invalid test' % (test,))
+      self.assert_(test in FILTERED_TESTS, f'{test} is an invalid test')
     for test in SHUFFLED_SHARDED_TESTS:
-      self.assert_(test in SHARDED_TESTS, '%s is an invalid test' % (test,))
+      self.assert_(test in SHARDED_TESTS, f'{test} is an invalid test')
 
   def testShuffleIncludesAllTests(self):
     for test in ALL_TESTS:
-      self.assert_(test in SHUFFLED_ALL_TESTS, '%s is missing' % (test,))
+      self.assert_(test in SHUFFLED_ALL_TESTS, f'{test} is missing')
     for test in ACTIVE_TESTS:
-      self.assert_(test in SHUFFLED_ACTIVE_TESTS, '%s is missing' % (test,))
+      self.assert_(test in SHUFFLED_ACTIVE_TESTS, f'{test} is missing')
     for test in FILTERED_TESTS:
-      self.assert_(test in SHUFFLED_FILTERED_TESTS, '%s is missing' % (test,))
+      self.assert_(test in SHUFFLED_FILTERED_TESTS, f'{test} is missing')
     for test in SHARDED_TESTS:
-      self.assert_(test in SHUFFLED_SHARDED_TESTS, '%s is missing' % (test,))
+      self.assert_(test in SHUFFLED_SHARDED_TESTS, f'{test} is missing')
 
   def testShuffleLeavesDeathTestsAtFront(self):
     non_death_test_found = False
     for test in SHUFFLED_ACTIVE_TESTS:
       if 'DeathTest.' in test:
         self.assert_(not non_death_test_found,
-                     '%s appears after a non-death test' % (test,))
+                     f'{test} appears after a non-death test')
       else:
         non_death_test_found = True
 
@@ -248,9 +251,11 @@ class GTestShuffleUnitTest(gtest_test_utils.TestCase):
       [test_case, _] = test.split('.')
       if test_cases and test_cases[-1] != test_case:
         test_cases.append(test_case)
-        self.assertEqual(1, test_cases.count(test_case),
-                         'Test case %s is not grouped together in %s' %
-                         (test_case, tests))
+        self.assertEqual(
+            1,
+            test_cases.count(test_case),
+            f'Test case {test_case} is not grouped together in {tests}',
+        )
 
   def testShuffleDoesNotInterleaveTestCases(self):
     self._VerifyTestCasesDoNotInterleave(SHUFFLED_ALL_TESTS)

@@ -8,10 +8,7 @@ import argparse
 def median(lst):
     lst = sorted(lst)
     mid, odd = divmod(len(lst), 2)
-    if odd:
-        return lst[mid]
-    else:
-        return (lst[mid - 1] + lst[mid]) / 2.0
+    return lst[mid] if odd else (lst[mid - 1] + lst[mid]) / 2.0
 
 def mean(lst):
     return float(sum(lst)) / max(len(lst), 1)
@@ -73,7 +70,7 @@ def link_files():
     return end_t - start_t
 
 def benchmark(func):
-    results = [func() for i in range(10)]
+    results = [func() for _ in range(10)]
     return mean(results), median(results)
 
 def char_range(start, end):
@@ -82,18 +79,23 @@ def char_range(start, end):
 
 def generate_sections(fd):
     for i in range(sections_in_file):
-        fd.write('    SECTION("Section {}") {{\n'.format(i))
-        fd.write('\n'.join('        CHECK({});'.format(check) for check in random.sample(checks, assertions_per_section)))
+        fd.write(f'    SECTION("Section {i}") {{\n')
+        fd.write(
+            '\n'.join(
+                f'        CHECK({check});'
+                for check in random.sample(checks, assertions_per_section)
+            )
+        )
         fd.write('    }\n')
 
 
 def generate_file(file_no):
-    with open('tests{}.cpp'.format(file_no), 'w') as f:
+    with open(f'tests{file_no}.cpp', 'w') as f:
         f.write('#include "catch.hpp"\n\n')
         for i in range(test_cases_in_file):
-            f.write('TEST_CASE("File {} test {}", "[.compile]"){{\n'.format(file_no, i))
+            f.write(f'TEST_CASE("File {file_no} test {i}", "[.compile]"){{\n')
             for i, c in enumerate(char_range('a', 'f')):
-                f.write('    int {} = {};\n'.format(c, i))
+                f.write(f'    int {c} = {i};\n')
             generate_sections(f)
             f.write('}\n\n')
 

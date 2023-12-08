@@ -261,14 +261,15 @@ class BTQuotesChart(QtGui.QWidget):
             if trade.datetime > self.data[-1].datetime:
                 break
             while self.data[id_bar].datetime < trade.datetime:
-                id_bar = id_bar + 1
+                id_bar += 1
             x = id_bar - 1
             price = trade.price
+            opacity = 0
             if trade.direction == Direction.LONG:
                 self.buy_count_at_x[x] += 1
                 ya = self.data[x].low_price * 0.999
                 yt = self.data[x].low_price * \
-                    (1 - 0.001 * self.buy_count_at_x[x])
+                        (1 - 0.001 * self.buy_count_at_x[x])
                 pg.ArrowItem(
                     parent=self.signals_group_arrow,
                     pos=(x, ya),
@@ -278,7 +279,6 @@ class BTQuotesChart(QtGui.QWidget):
                     headLen=12,
                     tipAngle=50,
                 )
-                opacity = 0
                 brush = self.long_brush
                 if trade.offset == Offset.CLOSE:
                     opacity = 0.15
@@ -293,12 +293,11 @@ class BTQuotesChart(QtGui.QWidget):
                     valign=QtCore.Qt.AlignBottom,
                     opacity=opacity
                 )
-                text_sig.hide()
             else:
                 self.sell_count_at_x[x] += 1
                 ya = self.data[x].high_price * 1.001
                 yt = self.data[x].low_price * \
-                    (1 + 0.001 * self.sell_count_at_x[x])
+                        (1 + 0.001 * self.sell_count_at_x[x])
                 pg.ArrowItem(
                     parent=self.signals_group_arrow,
                     pos=(x, ya),
@@ -308,7 +307,6 @@ class BTQuotesChart(QtGui.QWidget):
                     headLen=12,
                     tipAngle=50,
                 )
-                opacity = 0
                 brush = self.long_brush
                 if trade.offset == Offset.CLOSE:
                     opacity = 0.15
@@ -323,8 +321,7 @@ class BTQuotesChart(QtGui.QWidget):
                     valign=QtCore.Qt.AlignTop,
                     opacity=opacity
                 )
-                text_sig.hide()
-
+            text_sig.hide()
             self.signals_text_items[ix] = text_sig
         self.chart.addItem(self.signals_group_arrow)
         self.chart.addItem(self.signals_group_text)
@@ -340,11 +337,10 @@ class BTQuotesChart(QtGui.QWidget):
                 if x > lbar and x < rbar:
                     signals.append(sig)
 
-        if len(signals) <= 40:
-            for sig in signals:
+        for sig in signals:
+            if len(signals) <= 40:
                 sig.show()
-        else:
-            for sig in signals:
+            else:
                 sig.hide()
 
     def update_yrange_limits(self):
@@ -352,10 +348,8 @@ class BTQuotesChart(QtGui.QWidget):
             return
         vr = self.chart.viewRect()
         lbar, rbar = int(vr.left()), int(vr.right())
-        if lbar < 0:
-            lbar = 0
-        if rbar > len(self.data):
-            rbar = len(self.data)
+        lbar = max(lbar, 0)
+        rbar = min(rbar, len(self.data))
         ymin = self.data[lbar].low_price
         ymax = self.data[rbar - 1].high_price
         for bar in self.data[lbar:rbar]:
@@ -383,10 +377,7 @@ class BTQuotesChart(QtGui.QWidget):
         symbol, exchange = extract_full_symbol(self.full_symbol)
 
         if start > end:
-            tmp = end
-            end = start
-            start = tmp
-
+            end, start = start, end
         bars = []
         if datasource == 'DataBase':
             bars = database_manager.load_bar_data(
@@ -397,19 +388,19 @@ class BTQuotesChart(QtGui.QWidget):
                 end=end,
             )
         elif datasource == 'Memory':
-            startix = 0
-            endix = 0
             totalbarlist = sqglobal.history_bar[self.full_symbol]
             if not totalbarlist:
                 QtWidgets.QMessageBox().information(
                     None, 'Info', 'No data in memory!', QtWidgets.QMessageBox.Ok)
                 return
             totalbars = len(totalbarlist)
+            startix = 0
             for i in range(totalbars):
                 if totalbarlist[i].datetime.date() < start:
                     continue
                 startix = i
                 break
+            endix = 0
             for i in reversed(range(totalbars)):
                 if totalbarlist[i].datetime.date() > end:
                     continue

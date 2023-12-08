@@ -703,8 +703,7 @@ class PaperApiWindow(QtWidgets.QFrame):
 
     def place_order(self):
         sectype = self.orderfielddict['sectype'][self.sec_type.currentIndex()]
-        fullname = self.exchange.currentText() + ' ' + sectype + \
-            ' ' + str(self.sym.text()).upper() + ' ' + self.sym_no.text()
+        fullname = f'{self.exchange.currentText()} {sectype} {str(self.sym.text()).upper()} {self.sym_no.text()}'
         o = PaperOrderField()
         o.full_symbol = fullname
         o.order_type = self.orderfielddict['ordertype'][self.order_type.currentIndex(

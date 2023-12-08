@@ -16,4 +16,4 @@ class TestPackageConan(ConanFile):
     def test(self):
         assert os.path.isfile(os.path.join(self.deps_cpp_info["Catch2"].rootpath, "licenses", "LICENSE.txt"))
         bin_path = os.path.join("bin", "test_package")
-        self.run("%s -s" % bin_path, run_environment=True)
+        self.run(f"{bin_path} -s", run_environment=True)

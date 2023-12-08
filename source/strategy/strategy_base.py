@@ -101,9 +101,9 @@ class StrategyBase(metaclass=ABCMeta):
         self.get_all_active_orders = self.strategy_engine.get_all_active_orders
 
     def get_my_active_orderids(self):
-        oidset = self.strategy_engine.get_strategy_active_orderids(
-            self.strategy_name)
-        return oidset
+        return self.strategy_engine.get_strategy_active_orderids(
+            self.strategy_name
+        )
 
     def get_my_position_holding(self):
         holding = self.get_position_holding(self.account, self.full_symbol)
@@ -127,34 +127,25 @@ class StrategyBase(metaclass=ABCMeta):
         """
         Get default parameters dict of strategy class.
         """
-        class_parameters = {}
-        for name in cls.parameters:
-            class_parameters[name] = getattr(cls, name)
-        return class_parameters
+        return {name: getattr(cls, name) for name in cls.parameters}
 
     def get_parameters(self):
         """
         Get strategy parameters dict.
         """
-        strategy_parameters = {}
-        for name in self.parameters:
-            strategy_parameters[name] = getattr(self, name)
-        return strategy_parameters
+        return {name: getattr(self, name) for name in self.parameters}
 
     def get_variables(self):
         """
         Get strategy variables dict.
         """
-        strategy_variables = {}
-        for name in self.variables:
-            strategy_variables[name] = getattr(self, name)
-        return strategy_variables
+        return {name: getattr(self, name) for name in self.variables}
 
     def get_data(self):
         """
         Get strategy data.
         """
-        strategy_data = {
+        return {
             "engine_id": self.engine_id,
             "strategy_name": self.strategy_name,
             "full_symbol": self.full_symbol,
@@ -163,7 +154,6 @@ class StrategyBase(metaclass=ABCMeta):
             "parameters": self.get_parameters(),
             "variables": self.get_variables(),
         }
-        return strategy_data
 
     @virtual
     def on_init(self, params_dict=None):
@@ -1093,28 +1083,23 @@ class StrategyBase(metaclass=ABCMeta):
         """
         self.buy_open(price, volume)
 
-        pass
-
     def sell(self, price: float, volume: float, stop: bool = False):
         """
         Send sell order to close a long position.
         """
         self.sell_close(price, volume)
-        pass
 
     def short(self, price: float, volume: float, stop: bool = False):
         """
         Send short order to open as short position.
         """
         self.sell_open(price, volume)
-        pass
 
     def cover(self, price: float, volume: float, stop: bool = False):
         """
         Send cover order to close a short position.
         """
         self.buy_close(price, volume)
-        pass
 # end wrapper
 
     def write_log(self, msg: str):
@@ -1124,7 +1109,6 @@ class StrategyBase(metaclass=ABCMeta):
         # if self.inited:
         #     self.cta_engine.write_log(msg, self)
         print(msg)
-        pass
 
     def get_engine_type(self):
         """
@@ -1153,7 +1137,6 @@ class StrategyBase(metaclass=ABCMeta):
         """
         self.strategy_engine.load_tick(
             self.full_symbol, days, self.on_tick, datasource)
-        pass
 
     def put_event(self):
         """
@@ -1177,7 +1160,6 @@ class StrategyBase(metaclass=ABCMeta):
         if self.trading:
             # print('begin syn data')
             self.strategy_engine.sync_strategy_data(self)
-        pass
 
 
 class CtaSignal(ABC):
@@ -1282,11 +1264,10 @@ class TargetPosTemplate(CtaTemplate):
                 if self.last_tick.limit_down:
                     short_price = max(short_price, self.last_tick.limit_down)
 
+        elif pos_change > 0:
+            long_price = self.last_bar.close_price + self.tick_add
         else:
-            if pos_change > 0:
-                long_price = self.last_bar.close_price + self.tick_add
-            else:
-                short_price = self.last_bar.close_price - self.tick_add
+            short_price = self.last_bar.close_price - self.tick_add
 
         # if self.get_engine_type() == EngineType.BACKTESTING:
         #     if pos_change > 0:

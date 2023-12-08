@@ -37,6 +37,7 @@ SYNOPSIS
        gtest_help_test.py
 """
 
+
 __author__ = 'wan@google.com (Zhanyong Wan)'
 
 import os
@@ -49,33 +50,23 @@ IS_WINDOWS = os.name == 'nt'
 
 PROGRAM_PATH = gtest_test_utils.GetTestExecutablePath('gtest_help_test_')
 FLAG_PREFIX = '--gtest_'
-DEATH_TEST_STYLE_FLAG = FLAG_PREFIX + 'death_test_style'
-STREAM_RESULT_TO_FLAG = FLAG_PREFIX + 'stream_result_to'
-UNKNOWN_FLAG = FLAG_PREFIX + 'unknown_flag_for_testing'
-LIST_TESTS_FLAG = FLAG_PREFIX + 'list_tests'
+DEATH_TEST_STYLE_FLAG = f'{FLAG_PREFIX}death_test_style'
+STREAM_RESULT_TO_FLAG = f'{FLAG_PREFIX}stream_result_to'
+UNKNOWN_FLAG = f'{FLAG_PREFIX}unknown_flag_for_testing'
+LIST_TESTS_FLAG = f'{FLAG_PREFIX}list_tests'
 INCORRECT_FLAG_VARIANTS = [re.sub('^--', '-', LIST_TESTS_FLAG),
                            re.sub('^--', '/', LIST_TESTS_FLAG),
                            re.sub('_', '-', LIST_TESTS_FLAG)]
-INTERNAL_FLAG_FOR_TESTING = FLAG_PREFIX + 'internal_flag_for_testing'
+INTERNAL_FLAG_FOR_TESTING = f'{FLAG_PREFIX}internal_flag_for_testing'
 
 SUPPORTS_DEATH_TESTS = "DeathTest" in gtest_test_utils.Subprocess(
     [PROGRAM_PATH, LIST_TESTS_FLAG]).output
 
 # The help message must match this regex.
 HELP_REGEX = re.compile(
-    FLAG_PREFIX + r'list_tests.*' +
-    FLAG_PREFIX + r'filter=.*' +
-    FLAG_PREFIX + r'also_run_disabled_tests.*' +
-    FLAG_PREFIX + r'repeat=.*' +
-    FLAG_PREFIX + r'shuffle.*' +
-    FLAG_PREFIX + r'random_seed=.*' +
-    FLAG_PREFIX + r'color=.*' +
-    FLAG_PREFIX + r'print_time.*' +
-    FLAG_PREFIX + r'output=.*' +
-    FLAG_PREFIX + r'break_on_failure.*' +
-    FLAG_PREFIX + r'throw_on_failure.*' +
-    FLAG_PREFIX + r'catch_exceptions=0.*',
-    re.DOTALL)
+    f'{FLAG_PREFIX}list_tests.*{FLAG_PREFIX}filter=.*{FLAG_PREFIX}also_run_disabled_tests.*{FLAG_PREFIX}repeat=.*{FLAG_PREFIX}shuffle.*{FLAG_PREFIX}random_seed=.*{FLAG_PREFIX}color=.*{FLAG_PREFIX}print_time.*{FLAG_PREFIX}output=.*{FLAG_PREFIX}break_on_failure.*{FLAG_PREFIX}throw_on_failure.*{FLAG_PREFIX}catch_exceptions=0.*',
+    re.DOTALL,
+)
 
 
 def RunWithFlag(flag):
@@ -87,10 +78,7 @@ def RunWithFlag(flag):
     flag: the command-line flag to pass to gtest_help_test_, or None.
   """
 
-  if flag is None:
-    command = [PROGRAM_PATH]
-  else:
-    command = [PROGRAM_PATH, flag]
+  command = [PROGRAM_PATH] if flag is None else [PROGRAM_PATH, flag]
   child = gtest_test_utils.Subprocess(command)
   return child.exit_code, child.output
 

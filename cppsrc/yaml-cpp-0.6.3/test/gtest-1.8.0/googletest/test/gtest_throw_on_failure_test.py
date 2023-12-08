@@ -70,7 +70,7 @@ def SetEnvVar(env_var, value):
 def Run(command):
   """Runs a command; returns True/False if its exit code is/isn't 0."""
 
-  print('Running "%s". . .' % ' '.join(command))
+  print(f"""Running "{' '.join(command)}". . .""")
   p = gtest_test_utils.Subprocess(command)
   return p.exited and p.exit_code == 0
 
@@ -97,24 +97,20 @@ class ThrowOnFailureTest(gtest_test_utils.TestCase):
     if env_var_value is None:
       env_var_value_msg = ' is not set'
     else:
-      env_var_value_msg = '=' + env_var_value
+      env_var_value_msg = f'={env_var_value}'
 
     if flag_value is None:
       flag = ''
     elif flag_value == '0':
-      flag = '--%s=0' % THROW_ON_FAILURE
+      flag = f'--{THROW_ON_FAILURE}=0'
     else:
-      flag = '--%s' % THROW_ON_FAILURE
+      flag = f'--{THROW_ON_FAILURE}'
 
     command = [EXE_PATH]
     if flag:
       command.append(flag)
 
-    if should_fail:
-      should_or_not = 'should'
-    else:
-      should_or_not = 'should not'
-
+    should_or_not = 'should' if should_fail else 'should not'
     failed = not Run(command)
 
     SetEnvVar(THROW_ON_FAILURE, None)

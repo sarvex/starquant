@@ -85,7 +85,7 @@ class DbBarData(Document):
         """
         Generate BarData object from DbBarData.
         """
-        bar = BarData(
+        return BarData(
             symbol=self.symbol,
             exchange=Exchange(self.exchange),
             datetime=self.datetime,
@@ -98,7 +98,6 @@ class DbBarData(Document):
             close_price=self.close_price,
             gateway_name="DB",
         )
-        return bar
 
 
 class DbTickData(Document):
@@ -275,8 +274,7 @@ class MongoManager(BaseDatabaseManager):
             datetime__gte=start,
             datetime__lte=end,
         )
-        data = [db_bar.to_bar() for db_bar in s]
-        return data
+        return [db_bar.to_bar() for db_bar in s]
 
     def load_tick_data(
         self, symbol: str, exchange: Exchange, start: datetime, end: datetime
@@ -287,13 +285,12 @@ class MongoManager(BaseDatabaseManager):
             datetime__gte=start,
             datetime__lte=end,
         )
-        data = [db_tick.to_tick() for db_tick in s]
-        return data
+        return [db_tick.to_tick() for db_tick in s]
 
     @staticmethod
     def to_update_param(d):
         return {
-            "set__" + k: v.value if isinstance(v, Enum) else v
+            f"set__{k}": v.value if isinstance(v, Enum) else v
             for k, v in d.__dict__.items()
         }
 
@@ -328,24 +325,22 @@ class MongoManager(BaseDatabaseManager):
     def get_newest_bar_data(
         self, symbol: str, exchange: "Exchange", interval: "Interval"
     ) -> Optional["BarData"]:
-        s = (
+        if s := (
             DbBarData.objects(symbol=symbol, exchange=exchange.value)
             .order_by("-datetime")
             .first()
-        )
-        if s:
+        ):
             return s.to_bar()
         return None
 
     def get_newest_tick_data(
         self, symbol: str, exchange: "Exchange"
     ) -> Optional["TickData"]:
-        s = (
+        if s := (
             DbTickData.objects(symbol=symbol, exchange=exchange.value)
             .order_by("-datetime")
             .first()
-        )
-        if s:
+        ):
             return s.to_tick()
         return None
 

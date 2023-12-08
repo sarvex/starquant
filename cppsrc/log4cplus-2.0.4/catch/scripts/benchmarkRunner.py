@@ -11,7 +11,7 @@ def get_commit_hash():
     return res.stdout.strip()
 
 if len(sys.argv) < 2:
-    print('Usage: {} benchmark-binary'.format(sys.argv[0]))
+    print(f'Usage: {sys.argv[0]} benchmark-binary')
     exit(1)
 
 
@@ -36,8 +36,8 @@ def parse_file(file):
 def run_benchmarks(binary):
     call = [binary] + '-d yes -r xml -o'.split()
     for i in range(num_runs):
-        file = 'temp{}.xml'.format(i)
-        print('Run number {}'.format(i))
+        file = f'temp{i}.xml'
+        print(f'Run number {i}')
         subprocess.run(call + [file])
         parse_file(file)
         # Remove file right after parsing, because benchmark output can be big
@@ -50,7 +50,9 @@ run_benchmarks(sys.argv[1])
 result_file = '{:%Y-%m-%dT%H-%M-%S}-{}.result'.format(datetime.now(), get_commit_hash())
 
 
-print('Writing results to {}'.format(result_file))
+print(f'Writing results to {result_file}')
 with open(result_file, 'w') as file:
     for k in sorted(data):
-        file.write('{}: median: {} (s), stddev: {} (s)\n'.format(k, median(data[k]), stdev(data[k])))
+        file.write(
+            f'{k}: median: {median(data[k])} (s), stddev: {stdev(data[k])} (s)\n'
+        )

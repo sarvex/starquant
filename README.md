@@ -10,8 +10,6 @@ Welcome to StarQuant
     <img src ="https://img.shields.io/badge/license-MIT-blue.svg"/>
 </p>
 
-[中文](README.md) 
-
 **StarQuant** is light-weighted, integrated algo-backtest/trade system/platform for individual trader, it is mainly used for future trading at present, stock and other commodity will be included in future.
 
 ## Features
